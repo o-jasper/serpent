@@ -52,7 +52,7 @@ def parse_lines(lns):
             else:
                 out.append(parse_lines(child_block))
         else:
-            if len(child_block) > 0:
+            if len(list(child_block)) > 0:
                 raise Exception("Not an if/else/while statement, can't have sub-clause! (%d)" % i)
         # This is somewhat complicated. Essentially, it converts something like
         # "if c1 then s1 elif c2 then s2 elif c3 then s3 else s4" (with appropriate
