@@ -21,7 +21,7 @@ def strip_line(ln):
 def parse_lines(lns):
     o = []
     i = 0
-    while i < len(lns):
+    while i < len(list(lns)):
         main = lns[i]
         # Skip empty lines
         if len(main.strip()) == 0:
@@ -35,7 +35,7 @@ def parse_lines(lns):
         indent = 99999999
         i += 1
         child_lns = []
-        while i < len(lns):
+        while i < len(list(lns)):
             if len(strip_line(lns[i])) > 0:
                 sp = spaces(lns[i])
                 if sp == 0: break
@@ -47,7 +47,7 @@ def parse_lines(lns):
         out = parse_line(main)
         # Include the child block into the parsed expression
         if out[0] in ['if', 'else', 'while', 'else if']:
-            if len(child_block) == 0:
+            if len(list(child_block)) == 0:
                 raise Exception("If/else/while statement must have sub-clause! (%d)" % i)
             else:
                 out.append(parse_lines(child_block))
