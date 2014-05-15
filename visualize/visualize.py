@@ -26,11 +26,14 @@ def straight_graph(tree, graph=None, fr=None):
         graph.add_edge(pydot.Edge(fr, added))
 
     if type(tree) is list:
-        assert len(tree) > 0 and type(tree[0]) == str
-        an(tree[0])
-
-        for el in tree[1:]:
-            sg(el, tree[0])
+        if len(tree) > 0:
+            assert type(tree[0]) == str
+            an(tree[0])
+    
+            for el in tree[1:]:
+                sg(el, tree[0])
+        else:
+            an('()')
     else:
         an(tree)
     return graph
