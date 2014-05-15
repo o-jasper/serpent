@@ -5,16 +5,6 @@ import pydot
 from random import random
 
 
-def gen_tree(p, n, d):
-    out = [str(random())]
-    for i in range(n):
-        if random() < p and d > 0:
-            out.append(gen_tree(p, n, d - 1))
-        else:
-            out.append(str(random()))
-    return out
-
-
 def assert_len(ast, length, say="wrong_length, should be"):
     if len(ast) != length:
         raise Exception(say, length, len(ast), ast)
@@ -44,8 +34,3 @@ def straight_graph(tree, graph=None, fr=None):
     else:
         an(tree)
     return graph
-
-
-g = straight_graph(gen_tree(0.2, 2, 2))
-
-g.write('sg.svg', format='svg')
