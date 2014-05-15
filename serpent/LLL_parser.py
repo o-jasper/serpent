@@ -61,13 +61,11 @@ class LLLParser(SExprParser):
                           (';', '\n', False, False, comment_name),
                           ('"', '"',  True,  True,  'str')]
         self.wrong_end_warning = True
-        self.white = [' ', '\t', '\n'],
+        self.white = [' ', '\t', '\n']
         self.earliest_macro = {}  # Dictionary of functions that act as macros.
 
     def parse_lll_stream(self, stream, initial=''):
-        got = self.parse_stream(stream, initial)
-        print(got)
-        return lll_to_s_expr(got)
+        return lll_to_s_expr(self.parse_stream(stream, initial))
 
     def parse_lll(self, string):
         return self.parse_lll_stream(io.StringIO(string))
