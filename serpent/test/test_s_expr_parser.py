@@ -1,5 +1,6 @@
 
 import os.path
+import io
 import sys
 from random import random
 
@@ -22,7 +23,8 @@ class TestParser(SExprParser):
 
     # Class essentially just stops me from having to pass these all the time.
     # Just do SExprParser().parse(), dont neccesarily need a variable.
-    def __init__(self):
+    def __init__(self, info=''):
+        self.info = info
         self.start_end = [('(', ')',  True,  True,  None),
                           (';', '\n', False, False, 'scrub'),
                           ('"', '"',  True,  True,  'str')]
@@ -33,11 +35,8 @@ class TestParser(SExprParser):
     def test_case(self, string, tree, o='(', c=')', white=[' ', '\t', '\n']):
         result = self.parse(string)
         if result != tree:
-            print('tree:  ', tree)
-            print('string:', string)
-            print('result:', result)
-
-        assert result == tree
+            raise Exception(self.info,
+                            'tree', tree, 'string', string, 'result', result)
 
     def test_1(self, p=0.1, n=2, d=2):
         tree = gen_tree(p, n, d)
@@ -45,16 +44,20 @@ class TestParser(SExprParser):
 
 
 # Simple case test.
-TestParser().test_case("bla 123 (45(678      af)sa faf((a sf))  (a) sfsa) ;do not include",
-                       ['bla', '123', ['45', ['678', 'af'],
+TestParser('simple_case').test_case("bla 123 (45(678      af)sa faf((a sf))  (a) sfsa) ;do not include",
+                        ['bla', '123', ['45', ['678', 'af'],
                         'sa', 'faf', [['a', 'sf']], ['a'], 'sfsa']])
 
-# This test fails! Its a Python bug!
-# x=io.StringIO("")
-# x.write("00.4528490737968983")
-# x.seek(0)
-# x.read() # -> '00.4528490737968983' !!!
-#
 # IMO Should have been caught in a test and not ended up downstream.
-for el in range(200):
-    TestParser().test_1()
+for i in range(200):
+    TestParser("autocase:%d"%i).test_1()
+
+# Thought it was a python bug somehow.. where are those zeros coming from...
+for i in range(200):
+    x = random()
+    s=io.StringIO("")
+    s.write(str(x))
+    s.seek(0)
+    got = s.read()
+    if got != str(x):
+        raise Exception('python bug!?', got, str(x), x)
