@@ -10,7 +10,6 @@ def find_stringstart(string, arrays, i):
             return el
     return None
 
-
 class SExprParser:
 
     # Class essentially just stops me from having to pass these all the time.
@@ -19,13 +18,15 @@ class SExprParser:
                                     (';', '\n', False, False, 'scrub'),
                                     ('"', '"',  True,  True,  'str')],
                  wrong_end_warning=True,
-                 white=[' ', '\t', ' '],
+                 white=[' ', '\t', '\n'],
                  earliest_macro={}):
         self.start_end = start_end
         self.wrong_end_warning = wrong_end_warning
         self.white = white
         self.earliest_macro = {}  # Dictionary of functions that act as macros.
 
+    # Parses just looking at the end. TODO may want to have it parse, looking
+    # beginners _and_ enders, but just returning as a single string.
     def raw_parse_plain(self, stream, initial='', end=')'):
         cur = initial
         i = 0
