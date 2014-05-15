@@ -55,7 +55,7 @@ class SExprParser:
                 out.append(what)
 
         def add_sub(added):
-            if type(added[0]) is str and added[0] in self.earliest_macro:
+            if len(added)>0 and type(added[0]) is str and added[0] in self.earliest_macro:
                 out.append(self.earliest_macro[added[0]](added))
             else:
                 out.append(added)
@@ -97,14 +97,18 @@ class SExprParser:
                     continue
 
                 # Potentially stop substree.
-                if self.wrong_end_warning and se[3]:
+                if self.wrong_end_warning in ['accept', 'warn', 'assert'] and se[3]:
 
                     end = find_stringstart(cur[i:], self.start_end, 1)
 
                     if end is not None:
                         if end[1] != se[1] and end[2]:
+                            if self.wrong_end_warning == 'warn':
+                                print("Warning, beginner and ender didnt match")
+                                add(cur[:i])
+                                return cur[i + len(se[1]):], out
                             raise((end, se, i))  # Error, starter and ender did not match.
-                        else:  # Correct ending.
+                        else:  # Correct ending, or ignoring.
                             add(cur[:i])
                             return cur[i + len(se[1]):], out
                 # (cheaper way, only checks the current one.)

@@ -19,8 +19,13 @@ def straight_graph_file(file, graph=None, fr=None):
     return straight_graph(tree)
 
 
-for el in ['Bank', 'kv', 'NameReg', 'Splitter', 'SubCurrency']:
+def sg_f(el):
     g = straight_graph_file(fromdir + '/' + el + '.lsp')
     to = str(fromdir) + '/sg_' + el[-4:] + '.svg'
     print(to)
     g.write(to, format = 'svg')
+
+sg_f('SubCurrency')
+
+for el in ['Bank', 'kv', 'NameReg', 'Splitter', 'SubCurrency']:
+    sg_f(el)
