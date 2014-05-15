@@ -143,7 +143,7 @@ def s_expr_write(stream, input, o='(', c=')', w=' '):
     def handle_1(el):
         if type(el) is list:
             stream.write(str(o))
-            s_expr_write(stream, el, o=0, c=c, w=w)
+            s_expr_write(stream, el, o=o, c=c, w=w)
             stream.write(str(c))
         else:
             stream.write(str(el))
