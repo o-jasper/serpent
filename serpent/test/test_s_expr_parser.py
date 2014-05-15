@@ -29,7 +29,7 @@ class TestParser(SExprParser):
                           (';', '\n', False, False, 'scrub'),
                           ('"', '"',  True,  True,  'str')]
         self.wrong_end_warning = True
-        self.white = [' ', '\t', ' ']
+        self.white = [' ', '\t', '\n']
         self.earliest_macro = {}
 
     def test_case(self, string, tree, o='(', c=')', white=[' ', '\t', '\n']):
