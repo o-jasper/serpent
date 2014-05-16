@@ -16,14 +16,17 @@ def straight_graph_file(file, graph=None, fr=None):
     with open(file, 'r') as stream:
         tree = LLLParser().parse_lll_stream(stream)
 
-    return straight_graph(tree)
+    print(tree)
+    return straight_graph(['root'] + tree)
 
+
+# {'dot': '', 'twopi': '', 'neato': '', 'circo': '', 'fdp': ''}
 
 def sg_f(el):
     g = straight_graph_file(fromdir + '/' + el + '.lsp')
-    to = str(fromdir) + '/sg_' + el[-4:] + '.svg'
+    to = str(fromdir) + '/sg_' + el + '.svg'
     print(to)
-    g.write(to, format = 'svg')
+    g.write(to, format = 'svg', prog='neato')
 
 sg_f('SubCurrency')
 
