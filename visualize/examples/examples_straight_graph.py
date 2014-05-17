@@ -16,15 +16,15 @@ def straight_graph_file(file, graph=None, fr=None):
     with open(file, 'r') as stream:
         tree = LLLParser().parse_lll_stream(stream)
 
-    print(tree)
     return straight_graph(['root'] + tree)
 
 
 # {'dot': '', 'twopi': '', 'neato': '', 'circo': '', 'fdp': ''}
 
 def sg_f(el):
-    g = straight_graph_file(fromdir + '/' + el + '.lsp')
-    to = str(fromdir) + '/sg_' + el + '.svg'
+    fn = (str(fromdir) + '/' if str(fromdir) != '' else '')  + el
+    g = straight_graph_file(fn + '.lsp')
+    to = fn + '.svg'
     print(to)
     g.write(to, format = 'svg', prog='neato')
 
