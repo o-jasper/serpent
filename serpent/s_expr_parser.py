@@ -152,14 +152,15 @@ def s_expr_write(stream, input, o='(', c=')', w=' '):
         else:
             stream.write(str(el))
 
-    handle_1(input[0])
-    for el in input[1:]:
-        stream.write(w)
-        handle_1(el)
+    if len(input) > 0:
+        handle_1(input[0])
+        for el in input[1:]:
+            stream.write(w)
+            handle_1(el)
 
 
 def s_expr_str(tree, o='(', c=')', w=' '):
-    stream = io.StringIO("")
+    stream = io.StringIO()
     s_expr_write(stream, tree, o=o, c=c, w=w)
     stream.seek(0)  # Dont forget to read back!
     return stream.read()

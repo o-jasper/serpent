@@ -7,26 +7,26 @@ sys.path.append(os.path.join(fromdir, '../../serpent/'))
 
 import io
 
-from visualize import straight_graph
+from visualize import control_flow_graph
 from LLL_parser import LLLParser
 
 
-def straight_graph_file(file, graph=None, fr=None):
+def control_flow_graph_file(file, graph=None, fr=None):
 
     with open(file, 'r') as stream:
         tree = LLLParser().parse_lll_stream(stream)
 
-    return straight_graph(['root'] + tree)
+    return control_flow_graph(tree)
 
 
 # {'dot': '', 'twopi': '', 'neato': '', 'circo': '', 'fdp': ''}
 
 def sg_f(el):
     fn = (str(fromdir) + '/' if str(fromdir) != '' else '')
-    g = straight_graph_file(fn + el + '.lsp')
-    to = fn + 'sg_' + el + '.svg'
+    g = control_flow_graph_file(fn + el + '.lsp')
+    to = fn + 'cf_' + el + '.svg'
     print(to)
-    g.write(to, format = 'svg', prog='neato')
+    g.write(to, format = 'svg', prog='dot')
 
 sg_f('SubCurrency')
 

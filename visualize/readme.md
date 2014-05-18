@@ -1,5 +1,12 @@
 # Visualizing based on pydot and the AST tree/LLL
 
+#### Control flow graph
+The `control_flow_graph` is what i wanted to make, the other one was created
+because it is relatively easy.
+
+Still WIP
+
+#### Straight graph
 Note that the `straight_graph` visualization, loses a lot of information.
 Because it doesnt show the order of the arguments.
 
