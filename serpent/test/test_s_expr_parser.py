@@ -6,6 +6,7 @@ from random import random
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
+from python_2_3_compat import to_str, is_str
 from s_expr_parser import SExprParser, s_expr_str
 
 
@@ -55,9 +56,9 @@ for i in range(200):
 # Thought it was a python bug somehow.. where are those zeros coming from...
 for i in range(200):
     x = random()
-    s=io.StringIO("")
-    s.write(str(x))
+    s=io.StringIO()
+    s.write(to_str(x))
     s.seek(0)
     got = s.read()
-    if got != str(x):
-        raise Exception('python bug!?', got, str(x), x)
+    if got != to_str(x):
+        raise Exception('python bug!?', got, to_str(x), x)

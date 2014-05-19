@@ -139,7 +139,7 @@ class SExprParser:
         return self.raw_parse_stream(stream, initial=initial)[1]
 
     def parse(self, string):
-        return self.parse_stream(io.StringIO(string))
+        return self.parse_stream(io.StringIO(to_str(string)))
 
 
 # Note: it doesnt do indentation.. or newlines.
