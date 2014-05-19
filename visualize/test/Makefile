@@ -1,7 +1,5 @@
 
-default: test
-
-test: test_control_flow.py test_straight.py
+default: control_flow.svg straight.svg
 
 %.svg: test_%.py
 	python2 $<

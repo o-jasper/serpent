@@ -20,4 +20,4 @@ def gen_tree(p, n, d):
 
 g = GraphCode().straight(gen_tree(0.2, 2, 2))
 
-g.write('test/straight.svg', format='svg')
+g.write(fromdir + 'straight.svg', format='svg')

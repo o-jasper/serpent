@@ -19,4 +19,4 @@ ble
 # WARN/TODO easy of forgetting comma is bad.
 g = GraphCode().control_flow(LLLParser().parse_lll(inp))
 
-g.write('test/control_flow.svg', format='svg')
+g.write(fromdir + 'control_flow.svg', format='svg')
