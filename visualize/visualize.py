@@ -20,17 +20,18 @@ def cf_expr_str(seq):
     return stream.read()
 
 
+themes = {'basic' : {'body'     : [('shape', 'box')],
+                     'control'  : [],
+                     'body_edge': [],
+                     'true'     : [('label','true')],
+                     'false'    : [('label','false')],
+                     'loop'     : [('label','loop')],
+                     'lll'      : [('label','lll')],
+                      'comment'  : []} }
+
 class GraphCode:
 
-    def __init__(self, graph=None, fr=None, uniqify=False,
-                 attrs={'body'     : [('shape', 'box')],
-                        'control'  : [],
-                        'body_edge': [],
-                        'true'     : [('label','true')],
-                        'false'    : [('label','false')],
-                        'loop'     : [('label','loop')],
-                        'lll'      : [('label','lll')],
-                        'comment'  : []}):
+    def __init__(self, graph=None, fr=None, uniqify=False, theme='basic', attrs=None):
         if graph is None:
             self.graph = pydot.Dot('from-tree', graph_type='digraph')
         else:
@@ -39,6 +40,8 @@ class GraphCode:
         self.uniqify = uniqify
         self.cnt = {'lll':0, 'comment':0}
 
+        if attrs is None:
+            attrs = themes[theme]
         self.attrs = attrs
 
 

@@ -24,11 +24,9 @@ def control_flow_graph_file(file, graph=None, fr=None):
 def sg_f(el):
     fn = (str(fromdir) + '/' if str(fromdir) != '' else '')
     g = control_flow_graph_file(fn + el + '.lsp', fr='root')
-    to = fn + 'cf_' + el + '.svg'
+    to = fn + 'cf/cf_' + el + '.svg'
     print(to)
     g.write(to, format = 'svg', prog='dot')
-
-sg_f('SubCurrency')
 
 for el in ['Bank', 'kv', 'NameReg', 'Splitter', 'SubCurrency']:
     sg_f(el)

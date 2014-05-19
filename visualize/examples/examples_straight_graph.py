@@ -24,7 +24,7 @@ def straight_graph_file(file, graph=None, fr=None):
 def sg_f(el):
     fn = (str(fromdir) + '/' if str(fromdir) != '' else '')
     g = straight_graph_file(fn + el + '.lsp')
-    to = fn + 'sg_' + el + '.svg'
+    to = fn + 'sg/sg_' + el + '.svg'
     print(to)
     g.write(to, format = 'svg', prog='neato')
 
