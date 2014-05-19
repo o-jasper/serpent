@@ -57,11 +57,11 @@ class LLLParser(SExprParser):
     def __init__(self, comment_name='scrub'):
         assert comment_name in ['scrub', 'str', 'comment']
 
-        self.start_end = [('[', ']',  True,  True,  'aref'),
-                          ('(', ')',  True,  True,  None),
-                          ('{', '}',  True,  True,  'seq'),
+        self.start_end = [('[', ']',  True,  False,  'aref'),
+                          ('(', ')',  True,  False,  None),
+                          ('{', '}',  True,  False,  'seq'),
                           (';', '\n', False, False, comment_name),
-                          ('"', '"',  True,  True,  'plain', 'str')]
+                          ('"', '"',  False, False, 'plain', 'str')]
         self.wrong_end_warning = 'warn'
         self.white = [' ', '\t', '\n', ':']
         self.earliest_macro = {}  # Dictionary of functions that act as macros.

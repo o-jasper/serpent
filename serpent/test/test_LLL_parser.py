@@ -8,3 +8,9 @@ from LLL_parser import LLLParser
 print(LLLParser().parse_lll('q(a b [a] 3 [ [b]] 432)'))
 
 print(LLLParser().parse_lll('a "string" b'))
+
+
+print(LLLParser().parse_lll(""" {
+  [0] "Bank"
+  (call 0x929b11b8eeea00966e873a241d4b67f7540d1f38 0 0 0 4 0 0)
+  }"""))

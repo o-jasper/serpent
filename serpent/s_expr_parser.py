@@ -15,9 +15,9 @@ class SExprParser:
 
     # Class essentially just stops me from having to pass these all the time.
     # Just do SExprParser().parse(), dont neccesarily need a variable.
-    def __init__(self, start_end = [('(', ')',  True,  True,  'call'),
+    def __init__(self, start_end = [('(', ')',  True,  False,  'call'),
                                     (';', '\n', False, False, 'scrub'),
-                                    ('"', '"',  True,  True,  'str')],
+                                    ('"', '"',  True,  False,  'str')],
                  wrong_end_warning=True,
                  white=[' ', '\t', '\n'],
                  earliest_macro={}):
@@ -80,7 +80,8 @@ class SExprParser:
                     if end is not None:
                         if end[1] != se[1] and end[2]:
                             if self.wrong_end_warning == 'warn':
-                                print("Warning, beginner and ender didnt match")
+                                print("Warning, beginner and ender didnt match %s vs %s" %
+                                      (end, se))
                                 add(cur[:i])
                                 return cur[i + len(se[1]):], out
                             raise((end, se, i))  # Error, starter and ender did not match.
