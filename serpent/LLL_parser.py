@@ -61,7 +61,7 @@ class LLLParser(SExprParser):
                           ('(', ')',  True,  True,  None),
                           ('{', '}',  True,  True,  'seq'),
                           (';', '\n', False, False, comment_name),
-                          ('"', '"',  True,  True,  'str')]
+                          ('"', '"',  True,  True,  'plain', 'str')]
         self.wrong_end_warning = 'warn'
         self.white = [' ', '\t', '\n', ':']
         self.earliest_macro = {}  # Dictionary of functions that act as macros.

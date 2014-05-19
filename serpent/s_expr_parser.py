@@ -72,6 +72,26 @@ class SExprParser:
                     i = 0
                     continue
 
+                # Potentially stop substree.
+                if self.wrong_end_warning in ['accept', 'warn', 'assert'] and se[3]:
+
+                    end = find_stringstart(cur[i:], self.start_end, 1)
+
+                    if end is not None:
+                        if end[1] != se[1] and end[2]:
+                            if self.wrong_end_warning == 'warn':
+                                print("Warning, beginner and ender didnt match")
+                                add(cur[:i])
+                                return cur[i + len(se[1]):], out
+                            raise((end, se, i))  # Error, starter and ender did not match.
+                        else:  # Correct ending, or ignoring.
+                            add(cur[:i])
+                            return cur[i + len(se[1]):], out
+                # (cheaper way, only checks the current one.)
+                elif cur[i:i+len(se[1])] == se[1]:
+                    add(cur[:i])
+                    return cur[i + len(se[1]):], out
+
                 # Potentially start subtree.
                 start = find_stringstart(cur[i:], self.start_end, 0)
                 if start is not None:
@@ -96,27 +116,6 @@ class SExprParser:
                         cur = left
                     i = 0  # As `cur` is set to be used with reset integer.
                     continue
-
-                # Potentially stop substree.
-                if self.wrong_end_warning in ['accept', 'warn', 'assert'] and se[3]:
-
-                    end = find_stringstart(cur[i:], self.start_end, 1)
-
-                    if end is not None:
-                        if end[1] != se[1] and end[2]:
-                            if self.wrong_end_warning == 'warn':
-                                print("Warning, beginner and ender didnt match")
-                                add(cur[:i])
-                                return cur[i + len(se[1]):], out
-                            raise((end, se, i))  # Error, starter and ender did not match.
-                        else:  # Correct ending, or ignoring.
-                            add(cur[:i])
-                            return cur[i + len(se[1]):], out
-                # (cheaper way, only checks the current one.)
-                elif cur[i:i+len(se[1])] == se[1]:
-                    add(cur[:i])
-                    return cur[i + len(se[1]):], out
-
                 i += 1
 
             n = 0

@@ -43,6 +43,8 @@ class TestParser(SExprParser):
         tree = gen_tree(p, n, d)
         self.test_case(s_expr_str(tree), tree)
 
+TestParser('string_case').test_case('"string" should end',
+                                    [['str', 'string'], 'should', 'end'])
 
 # Simple case test.
 TestParser('simple_case').test_case("bla 123 (45(678      af)sa faf((a sf))  (a) sfsa) ;do not include",
