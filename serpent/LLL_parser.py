@@ -1,5 +1,6 @@
 
 import io
+from python_2_3_compat import to_str, is_str
 from s_expr_parser import SExprParser
 
 def assert_len(ast, length, say="wrong_length, should be"):
@@ -36,7 +37,7 @@ def lll_to_s_expr(ast):
         if i == len(ast)-1:  # (if the last one was +=2 this doesnt happen)
             ret.append(lll_to_s_expr(ast[i]))
         return ret
-    elif type(ast) in [str,unicode]:
+    elif is_str(ast):
         if len(ast) == 0:
             raise Exception('Zero length strings not allowed in ast')
 
@@ -69,4 +70,4 @@ class LLLParser(SExprParser):
         return lll_to_s_expr(self.parse_stream(stream, initial))
 
     def parse_lll(self, string):
-        return self.parse_lll_stream(io.StringIO(unicode(string)))
+        return self.parse_lll_stream(io.StringIO(to_str(string)))

@@ -1,6 +1,7 @@
 # S-expression input of exactly the same as serpent.
 
 import io
+from python_2_3_compat import to_str, is_str
 
 
 # Convenience function.
@@ -55,7 +56,7 @@ class SExprParser:
                 out.append(what)
 
         def add_sub(added):
-            if len(added)>0 and type(added[0]) is str and added[0] in self.earliest_macro:
+            if len(added)>0 and is_str(added[0]) and added[0] in self.earliest_macro:
                 out.append(self.earliest_macro[added[0]](added))
             else:
                 out.append(added)
@@ -146,16 +147,16 @@ class SExprParser:
 def s_expr_write(stream, input, o='(', c=')', w=' '):
     def handle_1(el):
         if type(el) is list:
-            stream.write(unicode(o))
+            stream.write(to_str(o))
             s_expr_write(stream, el, o=o, c=c, w=w)
-            stream.write(unicode(c))
+            stream.write(to_str(c))
         else:
-            stream.write(unicode(el))
+            stream.write(to_str(el))
 
     if len(input) > 0:
         handle_1(input[0])
         for el in input[1:]:
-            stream.write(unicode(w))
+            stream.write(to_str(w))
             handle_1(el)
 
 
