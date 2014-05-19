@@ -36,7 +36,7 @@ def lll_to_s_expr(ast):
         if i == len(ast)-1:  # (if the last one was +=2 this doesnt happen)
             ret.append(lll_to_s_expr(ast[i]))
         return ret
-    elif type(ast) is str:
+    elif type(ast) in [str,unicode]:
         if len(ast) == 0:
             raise Exception('Zero length strings not allowed in ast')
 
@@ -62,11 +62,11 @@ class LLLParser(SExprParser):
                           (';', '\n', False, False, comment_name),
                           ('"', '"',  True,  True,  'str')]
         self.wrong_end_warning = 'warn'
-        self.white = [' ', '\t', '\n']
+        self.white = [' ', '\t', '\n', ':']
         self.earliest_macro = {}  # Dictionary of functions that act as macros.
 
     def parse_lll_stream(self, stream, initial=''):
         return lll_to_s_expr(self.parse_stream(stream, initial))
 
     def parse_lll(self, string):
-        return self.parse_lll_stream(io.StringIO(string))
+        return self.parse_lll_stream(io.StringIO(unicode(string)))

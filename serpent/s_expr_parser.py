@@ -146,16 +146,16 @@ class SExprParser:
 def s_expr_write(stream, input, o='(', c=')', w=' '):
     def handle_1(el):
         if type(el) is list:
-            stream.write(str(o))
+            stream.write(unicode(o))
             s_expr_write(stream, el, o=o, c=c, w=w)
-            stream.write(str(c))
+            stream.write(unicode(c))
         else:
-            stream.write(str(el))
+            stream.write(unicode(el))
 
     if len(input) > 0:
         handle_1(input[0])
         for el in input[1:]:
-            stream.write(w)
+            stream.write(unicode(w))
             handle_1(el)
 
 
