@@ -5,7 +5,7 @@ from random import random
 fromdir = os.path.dirname(__file__)
 sys.path.append(os.path.join(fromdir, '..'))
 
-from visualize import straight_graph
+from visualize import GraphCode
 
 # Note.. s_expr_parser test uses the same code..
 def gen_tree(p, n, d):
@@ -17,6 +17,6 @@ def gen_tree(p, n, d):
             out.append(str(random()))
     return out
 
-g = straight_graph(gen_tree(0.2, 2, 2))
+g = GraphCode().straight(gen_tree(0.2, 2, 2))
 
 g.write('test/straight.svg', format='svg')
