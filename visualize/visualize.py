@@ -37,10 +37,14 @@ def cf_expr_str(seq):
 class GraphCode:
 
     def __init__(self, graph=None, fr=None, uniqify=False,
-                 attrs={'body':[('shape', 'box')],
-                        'control':[],
-                        'true':[('label','true')],
-                        'false':[('label','true')]}):
+                 attrs={'body'     : [('shape', 'box')],
+                        'control'  : [],
+                        'body_edge': [],
+                        'true'     : [('label','true')],
+                        'false'    : [('label','false')],
+                        'loop'     : [('label','loop')],
+                        'lll'      : [('label','lll')],
+                        'comment'  : []}):
         if graph is None:
             self.graph = pydot.Dot('from-tree', graph_type='digraph')
         else:
@@ -60,7 +64,7 @@ class GraphCode:
                 
             if type(ast[0]) in [str, unicode] and str(ast[0]) in self.cnt:
                 self.cnt[ast[0]] += 1
-                repr_str = '<' + ast[0] + ' ' + str(self.cnt[ast[0]]) + '>'
+                repr_str = '<' + ast[0] + '_' + str(self.cnt[ast[0]]) + '>'
                 return repr_str, [[repr_str] + ast[1:]]
             else:
                 ret_alt, ret_llls = [], []
@@ -76,7 +80,7 @@ class GraphCode:
             return ast, []
 
 
-    def cf_add_node(self, added, fr, which):
+    def cf_add_node(self, added, fr, which, edge_which):
         llls = []
         if type(added) is list:
             added, llls = self.control_flow_fix(added)
@@ -88,15 +92,19 @@ class GraphCode:
 
         self.graph.add_node(added)
         if fr is not None:
-            self.graph.add_edge(pydot.Edge(fr, added))
-            # TODO mark these!
+            edge = pydot.Edge(fr, added)
+            if type(edge_which) is list:
+                edge.obj_dict['attributes'] = dict(edge_which)
+            else:
+                edge.obj_dict['attributes'] = dict(self.attrs[edge_which])
+            self.graph.add_edge(edge)
 
         for lll in llls:
-            self.control_flow(lll[1:], added)
+            self.control_flow(lll[1:], added, [('label',lll[0])])
         return added
 
 
-    def control_flow(self, ast, fr=None):
+    def control_flow(self, ast, fr=None, fr_which='body_edge'):
         assert type(ast) is list
 
         if fr is None:
@@ -110,33 +118,34 @@ class GraphCode:
                 if len(el) == 0:
                     raise Exception('Zero length entry?', i, ast)
     
-                pre_n = {'when' : 2, 'unless' : 2, 'for' : 4, 'seq' : 1,
-                          'lll' : 1, 'if' : None}
+                pre_n = {'when' : (2, 'true'), 'unless' : (2, 'false'),
+                          'for' : (4, 'loop'), 'seq' : (1,None),
+                          'lll' : (1, 'lll'), 'if' : (None,None)}
                 if el[0] in pre_n:
                     if j < i-1:  # Collect stuff in between.
-                        fr = self.cf_add_node(ast[j:i-1], fr, 'body')
-                    j = i + 1  # TODO WUT
+                        fr = self.cf_add_node(ast[j:i-1], fr, 'body', fr_which)
+                        fr_which = 'body_edge'
+                    j = i + 1
 
                     if el[0] == 'if':
                         assert len(el) in [3,4]
-                        fr = self.cf_add_node(el[:2], fr, 'control') # The condition.
-                        self.control_flow([el[2]], fr)
+                        fr = self.cf_add_node(el[:2], fr, 'control', fr_which) # The condition.
+                        self.control_flow([el[2]], fr, 'true')
                         if len(el) == 4:
-                            print([el[3]])
-                            self.control_flow([el[3]], fr)
-                        print(ast[j:], '---',el[0])
+                            self.control_flow([el[3]], fr, 'false')
                     else:
-                        n = pre_n[el[0]]
+                        n, which = pre_n[el[0]]
                         if len(el) < n:
                             raise Exception('Not enough arguments', len(el), el)
 
-                        if el not in ['seq']:
-                            fr= self.cf_add_node(el[:n], fr, 'control')
-                        self.control_flow(el[n:], fr)
-
+                        if el[0] not in ['seq']:
+                            fr = self.cf_add_node(el[:n], fr, 'control', fr_which)
+                        else:
+                            which = fr_which
+                        self.control_flow(el[n:], fr, which)
             i += 1
         if j < i:
-            self.cf_add_node(ast[j:], fr, 'body')
+            self.cf_add_node(ast[j:], fr, 'body', fr_which)
         return self.graph
 
 
