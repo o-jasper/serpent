@@ -19,7 +19,7 @@ def s_expr_write(stream, input, o='(', c=')', w=' '):
         handle_1(input[0])
         for el in input[1:]:
             stream.write(unicode(w))
-            handle_1(unicode(el))
+            handle_1(el)
 
 
 def cf_expr_str(seq):
@@ -42,41 +42,70 @@ class GraphCode:
             self.graph = graph
         self.fr = fr
         self.uniqify = uniqify
+        self.lll_cnt = 0
+
+
+    # Takes everything out that isnt 
+    def control_flow_fix(self, ast):
+        if type(ast) == list:
+            if len(ast) == 0:
+                return 'empty_list', []
+                
+            if ast[0] == 'lll':  # Only thing that can cause a need for graphing insides!
+                self.lll_cnt += 1
+                return 'lll(' + str(self.lll_cnt) + ')', [ast]
+            else:
+                ret_alt, ret_llls = [], []
+                for el in ast:
+                    alt, llls = self.control_flow_fix(el)
+                    ret_alt.append(alt)
+                    ret_llls = ret_llls + llls
+                return ret_alt, ret_llls
+        else:
+            return ast, []
 
 
     def cf_add_node(self, added, fr):
+        llls = []
         if type(added) is list:
+            added, llls = self.control_flow_fix(added)
             added = cf_expr_str(added)
-            print(added)
         if type(added) in [list, unicode]:
             added = pydot.Node(added)
+
         self.graph.add_node(added)
         if fr is not None:
             self.graph.add_edge(pydot.Edge(fr, added))
+
+        for lll in llls:
+            self.control_flow(lll[1:], fr=added)
         return added
 
 
     def control_flow(self, ast, fr=None):
+        assert type(ast) is list
+
         if fr is None:
             fr = self.fr
-
-        assert type(ast) is list
     
         i, j = 0, 0
         while i < len(ast):
     
             el = ast[i]
             if type(el) is list:
-                assert len(el) > 0
+                if len(el) == 0:
+                    raise Exception('Zero length entry?', i, ast)
     
-                pre_n = {'when' : 2, 'unless' : 2, 'for' : 4, 'seq' : 1, 'if' : None}
+                pre_n = {'when' : 2, 'unless' : 2, 'for' : 4, 'seq' : 1,
+                          'lll' : 1, 'if' : None}
+                fixed = []
                 if el[0] in pre_n:
-                    if i-1 > j:  # Collect stuff in between.
-                        fr = self.cf_add_node(added, fr)
-                    j = i + 1
+                    if j < i-1:  # Collect stuff in between.
+                        fr = self.cf_add_node(ast[j:i], fr)
+                        j = i + 1
                     if el[0] == 'if':
                         assert len(el) in [3,4]
-                        fr = self.cf_add_node(el[2:], fr) # The condition.
+                        fr = self.cf_add_node(el[2], fr) # The condition.
                         self.control_flow(el[3], fr)
                         if len(el) == 4:
                             self.control_flow(el[3], fr)
@@ -87,8 +116,8 @@ class GraphCode:
     
                         fr= self.cf_add_node(el[:n], fr)
                         self.control_flow(el[n:], fr)
-#                else:
-#                    got = self.control_flow_expr() #TODO
+                    fixed.append('SHOULDNT APPEAR')
+
             i += 1
         if i != j:
             self.cf_add_node(ast[j:], fr)

@@ -15,3 +15,6 @@ Also have trouble making nodes with the same names not be the same one.
 
 Looking to make something that visualizes the control flow, rather than the
 AST tree. That would actually be useful.
+
+## TODO
+* LLL is not case sentive.
