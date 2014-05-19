@@ -4,6 +4,7 @@ from random import random
 
 fromdir = os.path.dirname(__file__)
 sys.path.append(os.path.join(fromdir, '..'))
+sys.path.append(os.path.join(fromdir, '../../serpent'))
 
 from visualize import GraphCode
 

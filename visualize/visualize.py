@@ -3,23 +3,9 @@ import pydot
 from random import random
 
 import io
+from python_2_3_compat import to_str, is_str
 
-# Python 2 wants unicode..
-#(from s_expr_parser import s_expr_str)
-def s_expr_write(stream, input, o='(', c=')', w=' '):
-    def handle_1(el):
-        if type(el) is list:
-            stream.write(unicode(o))
-            s_expr_write(stream, el, o=o, c=c, w=w)
-            stream.write(unicode(c))
-        else:
-            stream.write(unicode(el))
-
-    if len(input) > 0:
-        handle_1(input[0])
-        for el in input[1:]:
-            stream.write(unicode(w))
-            handle_1(el)
+from s_expr_parser import s_expr_write
 
 
 def cf_expr_str(seq):
@@ -28,7 +14,7 @@ def cf_expr_str(seq):
     stream = io.StringIO()
     s_expr_write(stream, seq[0])
     for el in seq[1:]:
-        stream.write(unicode('\n'))
+        stream.write(to_str('\n'))
         s_expr_write(stream, el)
     stream.seek(0)  # Dont forget to read back!
     return stream.read()
@@ -61,8 +47,8 @@ class GraphCode:
         if type(ast) == list:
             if len(ast) == 0:
                 return 'empty_list', []
-                
-            if type(ast[0]) in [str, unicode] and str(ast[0]) in self.cnt:
+
+            if is_str(ast[0]) and str(ast[0]) in self.cnt:
                 self.cnt[ast[0]] += 1
                 repr_str = '<' + ast[0] + '_' + str(self.cnt[ast[0]]) + '>'
                 return repr_str, [[repr_str] + ast[1:]]
@@ -85,7 +71,7 @@ class GraphCode:
         if type(added) is list:
             added, llls = self.control_flow_fix(added)
             added = cf_expr_str(added)
-        if type(added) in [unicode, str]:
+        if is_str(added):
             added = pydot.Node(added)
         if which in self.attrs:
             added.obj_dict['attributes'] = dict(self.attrs[which])
