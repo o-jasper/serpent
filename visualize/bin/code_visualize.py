@@ -9,14 +9,16 @@ sys.path.append(os.path.join(fromdir, '../../serpent/'))
 
 import argparse
 
-parser = argparse.ArgumentParser()
-parser.add_argument("input",  help="Input LLL file.")
-parser.add_argument("output", help="Output file.")
-parser.add_argument("--prog",   help="Graphviz program to use dot|twopi|neato|circo|fdp.", default='dot')
-parser.add_argument("--format",   help="Output format, defaults based on output file.",
+parser = argparse.ArgumentParser(description="""Visualize code with graphviz.
+Control flow available.""")
+parser.add_argument('input',  help='Input LLL file.')
+parser.add_argument('output', help='Output file.')
+parser.add_argument('--prog', help='Graphviz program to use dot|twopi|neato|circo|fdp.',
+                     default='dot')
+parser.add_argument('--format', help='Output format, defaults based on output file.',
                      default=None)
-parser.add_argument("--which",
-                    help="What kind, sg|cf for straight graph/control flow. Default: control flow.",
+parser.add_argument('--which',
+                    help='What kind, sg|cf for straight graph/control flow.',
                     default='cf')
 args = parser.parse_args()
 
