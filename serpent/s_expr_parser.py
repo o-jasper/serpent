@@ -4,21 +4,28 @@ import io
 from python_2_3_compat import to_str, is_str
 
 
-# Convenience function.
-def find_stringstart(string, arrays, i):
-    for el in arrays:
-        if string[:len(el[i])] == el[i]:
-            return el
-    return None
+class BeginEnd:
+    def __init__(self, begin, end, name=None,
+                  allow_different_end = False, seek_different_end = False,
+                  internal_handling = 'continue',
+                  wrong_end = 'default'):
+        self.begin = begin
+        self.end   = end
+        self.name  = name
+        self.allow_different_end = allow_different_end
+        self.seek_different_end  = seek_different_end
+        self.internal_handling   = internal_handling
+        self.wrong_end = wrong_end
 
-# TODO the `start_end` bit is a bit harder to follow than it should be.
+
 class SExprParser:
 
     # Class essentially just stops me from having to pass these all the time.
     # Just do SExprParser().parse(), dont neccesarily need a variable.
-    def __init__(self, start_end = [('(', ')',  True,  False,  'call'),
-                                    (';', '\n', False, False, 'scrub'),
-                                    ('"', '"',  True,  False,  'str')],
+    def __init__(self, start_end = [BeginEnd('(', ')'),
+                                    BeginEnd(';', '\n', internal_handling='scrub'),
+                                    BeginEnd('"', '"',  'str', internal_handling='str',
+                                             wrong_end='ignore')],
                  wrong_end_warning=True,
                  white=[' ', '\t', '\n'],
                  earliest_macro={}):
@@ -26,6 +33,20 @@ class SExprParser:
         self.wrong_end_warning = wrong_end_warning
         self.white = white
         self.earliest_macro = {}  # Dictionary of functions that act as macros.
+
+
+    # Convenience function. Gets begin/end at position, if available.
+    def begin_here(self, string):
+        for el in self.start_end:
+            if string[:len(el.begin)] == el.begin:
+                return el
+        return None
+
+    def end_here(self, string):
+        for el in self.start_end:
+            if string[:len(el.end)] == el.end:
+                return el
+        return None
 
     # Parses just looking at the end. TODO may want to have it parse, looking
     # beginners _and_ enders, but just returning as a single string.
@@ -48,7 +69,7 @@ class SExprParser:
 
     # Returns a pair of arguments, the result and the remaining string.
     def raw_parse_stream(self, stream, initial='',
-                         se=('top', ')', False, False, 'top')):
+                         begin=BeginEnd('top', ')', 'top')):
         cur = initial
         out = []
 
@@ -73,48 +94,51 @@ class SExprParser:
                     i = 0
                     continue
 
+                # (cheaper way, only checks the current one.)
+                if cur[i:i+len(begin.end)] == begin.end:
+                    add(cur[:i])
+                    return cur[i + len(begin.end):], out
                 # Potentially stop substree.
-                if self.wrong_end_warning in ['accept', 'warn', 'assert'] and se[3]:
+                elif self.wrong_end_warning in ['accept', 'warn', 'assert']:
 
-                    end = find_stringstart(cur[i:], self.start_end, 1)
+                    end = self.end_here(cur[i:])
 
-                    if end is not None:
-                        if end[1] != se[1] and end[2]:
+                    if end is not None and end.wrong_end != 'ignore':
+                        if end.end != begin.end and \
+                           end.allow_different_end and begin.seek_different_end:
                             if self.wrong_end_warning == 'warn':
                                 print("Warning, beginner and ender didnt match %s vs %s" %
                                       (end, se))
                                 add(cur[:i])
-                                return cur[i + len(se[1]):], out
-                            raise((end, se, i))  # Error, starter and ender did not match.
+                                return cur[i + len(begin.end):], out
+                            raise((end, begin, i))  # Error, starter and ender did not match.
                         else:  # Correct ending, or ignoring.
                             add(cur[:i])
-                            return cur[i + len(se[1]):], out
-                # (cheaper way, only checks the current one.)
-                elif cur[i:i+len(se[1])] == se[1]:
-                    add(cur[:i])
-                    return cur[i + len(se[1]):], out
+                            return cur[i + len(begin.end):], out
 
                 # Potentially start subtree.
-                start = find_stringstart(cur[i:], self.start_end, 0)
+                start = self.begin_here(cur[i:])
                 if start is not None:
                     add(cur[:i])
 
-                    if start[4] in ['scrub', 'plain']:  # Dont parse inside.
+                    if start.internal_handling in ['scrub', 'str']:  # Dont parse inside.
                         left, got = self.raw_parse_plain(stream,
-                                                         cur[i + len(start[0]):], start[1])
+                                                         cur[i + len(start.begin):],
+                                                         start.end)
 
-                        if start[4] == 'plain':  # Use it.
-                            add_sub([start[5], got])
+                        if start.internal_handling == 'str':  # Use it.
+                            add_sub([start.name, got])
 
                         cur = left
                     else:
                         left, ret = self.raw_parse_stream(stream,
-                                                          cur[i + len(start[0]):], se=start)
+                                                          cur[i + len(start.begin):],
+                                                          begin=start)
                         # The ender-starter associated is optionally attached.
-                        if start[4] is None:
+                        if start.name is None:
                             add_sub(ret)
                         else:
-                            add_sub([start[4]] + ret)
+                            add_sub([start.name] + ret)
                         cur = left
                     i = 0  # As `cur` is set to be used with reset integer.
                     continue

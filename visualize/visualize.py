@@ -97,7 +97,7 @@ class GraphCode:
             self.graph.add_edge(edge)
 
         for lll in llls:
-            self.control_flow(lll[1:], added, [('label',lll[0])])
+            self.control_flow(lll[1], added, [('label',lll[0])])
         return added
 
 
@@ -125,8 +125,8 @@ class GraphCode:
                     j = i + 1
 
                     if el[0] == 'if':
-                        assert len(el) in [3,4]
-                        fr = self.cf_add_node(el[:2], fr, 'control', fr_which) # The condition.
+                        assert len(el) in [3,4]  # The condition.
+                        fr = self.cf_add_node(el[1], fr, 'control', fr_which)
                         self.control_flow([el[2]], fr, 'true')
                         if len(el) == 4:
                             self.control_flow([el[3]], fr, 'false')
@@ -135,7 +135,7 @@ class GraphCode:
                         if len(el) < n:
                             raise Exception('Not enough arguments', len(el), el)
 
-                        if el[0] not in ['seq']:
+                        if el[0] not in ['seq', 'when', 'unless']:
                             fr = self.cf_add_node(el[:n], fr, 'control', fr_which)
                         else:
                             which = fr_which
