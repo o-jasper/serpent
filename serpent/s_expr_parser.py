@@ -56,7 +56,7 @@ class SExprParser:
                 out.append(what)
 
         def add_sub(added):
-            if len(added)>0 and is_str(added[0]) and added[0] in self.earliest_macro:
+            if len(added) > 0 and is_str(added[0]) and added[0] in self.earliest_macro:
                 out.append(self.earliest_macro[added[0]](added))
             else:
                 out.append(added)
@@ -137,6 +137,11 @@ class SExprParser:
 
     def parse_stream(self, stream, initial=''):
         return self.raw_parse_stream(stream, initial=initial)[1]
+
+    def parse_file(self, file, initial=''):
+        with open(file, 'r') as stream:
+            tree = self.parse_stream(stream, initial)
+        return tree
 
     def parse(self, string):
         return self.parse_stream(io.StringIO(to_str(string)))

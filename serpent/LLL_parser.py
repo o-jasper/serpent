@@ -3,9 +3,11 @@ import io
 from python_2_3_compat import to_str, is_str
 from s_expr_parser import SExprParser
 
+
 def assert_len(ast, length, say="wrong_length, should be"):
     if len(ast) != length:
         raise Exception(say, length, len(ast), ast)
+
 
 # Assumes `sstore`, `mstore`, `sload`, `mload`, will do vars.
 def lll_to_s_expr(ast):
@@ -18,7 +20,7 @@ def lll_to_s_expr(ast):
                 assert_len(el, 2)
                 if type(el[1]) is list and el[1][0] == 'aref':
                     assert_len(el, 2)
-                 # TODO contract.storage_bytes doesnt exist.(or not create it..)
+                # TODO contract.storage_bytes doesnt exist.(or not create it..)
                     ret.append(['sstore', lll_to_s_expr(el[1][1]),
                                 lll_to_s_expr(ast[i+1])])
                 else:
@@ -29,7 +31,7 @@ def lll_to_s_expr(ast):
                 ret.append(['mload', ast[i+1]])
                 i += 2
             elif el == '@@':
-                ret.append(['sload', ast[i+1]])                
+                ret.append(['sload', ast[i+1]])
                 i += 2
             else:
                 ret.append(lll_to_s_expr(el))
@@ -71,3 +73,8 @@ class LLLParser(SExprParser):
 
     def parse_lll(self, string):
         return self.parse_lll_stream(io.StringIO(to_str(string)))
+
+    def parse_lll_file(self, file, initial=''):
+        with open(file, 'r') as stream:
+            tree = self.parse_lll_stream(stream, initial)
+        return tree

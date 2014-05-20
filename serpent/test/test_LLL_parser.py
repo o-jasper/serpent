@@ -9,6 +9,8 @@ print(LLLParser().parse_lll('q(a b [a] 3 [ [b]] 432)'))
 
 print(LLLParser().parse_lll('a "string" b'))
 
+print(LLLParser().parse_lll('@@a @@ b @@(calldataload 0) @@ (calldataload 0)'))
+
 
 print(LLLParser().parse_lll(""" {
   [0] "Bank"

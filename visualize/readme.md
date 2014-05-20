@@ -23,3 +23,6 @@ AST tree. That would actually be useful.
 * Further out:
   + More direct control of positioning?
   + Make it workable with presentation?
+* Really closer to the parser.
+  + LLL printer instead of s-expression.
+  + infix-like printing (Serpent-like)
