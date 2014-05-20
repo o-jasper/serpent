@@ -11,6 +11,7 @@ def find_stringstart(string, arrays, i):
             return el
     return None
 
+# TODO the `start_end` bit is a bit harder to follow than it should be.
 class SExprParser:
 
     # Class essentially just stops me from having to pass these all the time.

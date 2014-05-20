@@ -5,19 +5,7 @@ from random import random
 import io
 from python_2_3_compat import to_str, is_str
 
-from s_expr_parser import s_expr_write
-
-
-def cf_expr_str(seq):
-    if not (type(seq) is list and len(seq) > 0):
-        raise Exception(seq)
-    stream = io.StringIO()
-    s_expr_write(stream, seq[0])
-    for el in seq[1:]:
-        stream.write(to_str('\n'))
-        s_expr_write(stream, el)
-    stream.seek(0)  # Dont forget to read back!
-    return stream.read()
+from LLL_parser import LLLWriter
 
 
 themes = {'basic' : {'body'     : [('shape', 'box')],
@@ -30,8 +18,9 @@ themes = {'basic' : {'body'     : [('shape', 'box')],
                       'comment'  : []} }
 
 class GraphCode:
-
-    def __init__(self, graph=None, fr=None, uniqify=False, theme='basic', attrs=None):
+    
+    def __init__(self, graph=None, fr=None, uniqify=False, theme='basic', attrs=None,
+                 write_fun=None, lllwriter=LLLWriter()):
         if graph is None:
             self.graph = pydot.Dot('from-tree', graph_type='digraph')
         else:
@@ -44,8 +33,27 @@ class GraphCode:
             attrs = themes[theme]
         self.attrs = attrs
 
+        if write_fun is None:
+            def _write_fun(stream, tree):
+                lllwriter.write_lll_stream(stream, tree)
 
-    # Takes everything out that isnt 
+            write_fun = _write_fun
+        self.write_fun = write_fun
+
+
+    def cf_expr_str(self, seq):
+        if not (type(seq) is list and len(seq) > 0):
+            raise Exception(seq)
+        stream = io.StringIO()
+        self.write_fun(stream, seq[0])
+        for el in seq[1:]:  # Here for the newlines.
+            stream.write(to_str('\n'))
+            self.write_fun(stream, el)
+        stream.seek(0)  # Dont forget to read back!
+        return stream.read()
+
+
+    # Checks if parts of expressions need more nodes.
     def control_flow_fix(self, ast):
         if type(ast) == list:
             if len(ast) == 0:
@@ -73,7 +81,7 @@ class GraphCode:
         llls = []
         if type(added) is list:
             added, llls = self.control_flow_fix(added)
-            added = cf_expr_str(added)
+            added = self.cf_expr_str(added)
         if is_str(added):
             added = pydot.Node(added)
         if which in self.attrs:

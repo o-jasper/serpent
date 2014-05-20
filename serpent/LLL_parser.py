@@ -78,3 +78,84 @@ class LLLParser(SExprParser):
         with open(file, 'r') as stream:
             tree = self.parse_lll_stream(stream, initial)
         return tree
+
+class LLLWriter:
+
+    def __init__(self, mload='@', mstore='[', sload='@@',sstore='[[', config=None):
+        self.config = {} if config is None else config
+        def sc(name, to):
+            if name not in self.config:
+                self.config[name] = to
+        sc('mload',  mload)
+        sc('mstore', mstore)
+        sc('sload',  sload)
+        sc('sstore', sstore)
+        sc('str',    '"')
+        sc('seq',    '{')
+
+    def write_lll_stream(self, stream, tree):
+        def w(what):
+            stream.write(to_str(what))
+
+        def w_s_tree(val, name, c):
+            if name in ['mload','sload']:
+                assert len(val) == 2
+                if c in ['@','@@']:
+                    w(c)
+                    return w_tree(val[1])
+                elif c == 'var':  # (Note this is not LLL output)
+                    if type(val[1]) is str:
+                        w(val[1])
+                    else:
+                        w('(mload ')
+                        w_tree(val[1])
+                        w(')')
+                    return
+            elif name in ['mstore', 'sstore']:
+                assert len(val) == 3
+                if c in ['[', '[[']:
+                    w(c)
+                    w_tree(val[1])
+                    w('] ' if c == '[' else ']] ')
+                    return w_tree(val[2])
+            elif name == 'seq':
+                if c == '{':
+                    return w_p_tree(val[1:], '{', '}')
+            elif name == 'str':
+                assert len(val) == 2
+                if c == '"':
+                    w(c)
+                    w(val[1])
+                    return w(c)
+            else:
+                w_p_tree(val, '(', ')')
+            raise Exception('Invalid config', c, val)
+
+        def w_p_tree(val, o, c):
+            w(o)
+            if len(val) > 0:
+                w_tree(val[0])
+                for el in val[1:]:
+                    w(' ')
+                    w_tree(el)
+            w(c)
+
+        def w_tree(val):
+            if type(val) is list:
+                if is_str(val[0]):
+                    name = val[0].lower()
+                    if name in self.config:
+                        c = self.config[name]
+                        if c != 'sexpr':
+                            return w_s_tree(val, name, c)
+                w_p_tree(val, '(', ')')
+            else:
+                w(val)
+
+        w_tree(tree)
+
+    def write_lll(self, tree):
+        stream = io.StringIO()
+        self.write_lll_stream(stream, tree)
+        stream.seek(0)  # Dont forget to read back!
+        return stream.read()
