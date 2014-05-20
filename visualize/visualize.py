@@ -10,12 +10,13 @@ from LLL_parser import LLLWriter
 
 themes = {'basic' : {'body'     : [('shape', 'box')],
                      'control'  : [],
-                     'body_edge': [],
+                     'body_edge': [('penwidth', '2.0')],
                      'true'     : [('label','true')],
                      'false'    : [('label','false')],
-                     'loop'     : [('label','loop')],
+                     'for_edge' : [('label','loop'), ('dir','both')],
                      'lll'      : [('label','lll')],
-                      'comment'  : []} }
+                     'comment'  : [],
+                     'debug'    : [('label','bugifshown')]}}
 
 class GraphCode:
     
@@ -39,7 +40,8 @@ class GraphCode:
 
             write_fun = _write_fun
         self.write_fun = write_fun
-
+        
+        self.i = 0
 
     def cf_expr_str(self, seq):
         if not (type(seq) is list and len(seq) > 0):
@@ -83,9 +85,12 @@ class GraphCode:
             added, llls = self.control_flow_fix(added)
             added = self.cf_expr_str(added)
         if is_str(added):
-            added = pydot.Node(added)
-        if which in self.attrs:
-            added.obj_dict['attributes'] = dict(self.attrs[which])
+            self.i += 1
+            node = pydot.Node(str(self.i))
+            if which in self.attrs:
+                node.obj_dict['attributes'] = dict(self.attrs[which])
+            node.set_label(added)
+            added = node
 
         self.graph.add_node(added)
         if fr is not None:
@@ -97,7 +102,7 @@ class GraphCode:
             self.graph.add_edge(edge)
 
         for lll in llls:
-            self.control_flow([lll[1]], added, [('label',lll[0])])
+            self.control_flow([lll[1]], added, 'lll')
         return added
 
 
@@ -116,7 +121,7 @@ class GraphCode:
                     raise Exception('Zero length entry?', i, ast)
     
                 pre_n = {'when' : (2, 'true'), 'unless' : (2, 'false'),
-                          'for' : (4, 'loop'), 'seq' : (1,None),
+                          'for' : (4, 'for_edge'), 'seq' : (1,None),
                           'lll' : (1, 'lll'), 'if' : (None,None)}
                 name = el[0].lower()
                 if name in pre_n:
@@ -141,6 +146,7 @@ class GraphCode:
                         else:
                             which = fr_which
                         self.control_flow(el[n:], fr, which)
+                    fr_which = 'body_edge'
             i += 1
         if j < i:
             self.cf_add_node(ast[j:], fr, 'body', fr_which)
