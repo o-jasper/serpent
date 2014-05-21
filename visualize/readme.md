@@ -22,17 +22,19 @@ AST tree. That would actually be useful.
 ## TODO
 * More/nicer themes.. Particularly an Ethereum theme would be nice.
 
-* Optionally show flow back into the body, and/or graphically indicate 
-  `return`, `stop`, or return back into body.
-
-* Decorate `if`, `when`, `unless`, `for`?
+* Graphically indicate `return`, `stop`, or return back into body.
 
 * Handle comments.
 
 * Further out:
   + More direct control of positioning?
-  + Make it workable with presentation?
+  + Make it workable with other presentation?
 
-* Really closer to the parser/writer handler.
+* Really closer to the parser/write/ast stuff.
   + infix-like printing (Serpent-like) i.e `a + b` instead of `(+ a b)`
   + Identify identical paths.
+
+* Tricky:
+  + Decorate `if`, `when`, `unless`, `for`? (Apparently no html)
+  + Edges back to body. Tricky, and probably not very enlightening.
+  

@@ -8,38 +8,46 @@ def assert_len(ast, length, say="wrong_length, should be"):
         raise Exception(say, length, len(ast), ast)
 
 
+def lll_to_s_expr_munch(ast):
+    if len(ast) == 0:
+        return ast, []
+
+    sm_load = {'@':'mload', '@@':'sload'}
+    el = ast[0]
+    if is_str(el) and el in sm_load:
+        got,left = lll_to_s_expr_munch(ast[1:])
+        return [sm_load[el], got], left
+    elif type(el) is list and len(el) > 0 and is_str(el[0]) and el[0].lower() == 'aref':
+        assert_len(el, 2)
+        got,left = lll_to_s_expr_munch(ast[1:])
+        if type(el[1]) is list and el[1][0].lower() == 'aref':
+            assert_len(el, 2)  # (aref (aref <a>)) <b> -> (sstore <a> <b>)
+            return ['sstore', lll_to_s_expr_munch(el[1][1:])[0], got], left
+        else:  # (aref <a>) <b> -> (mstore <a> <b>)
+            return ['sstore', lll_to_s_expr_munch(el[1:])[0], got], left
+    else:
+        return lll_to_s_expr(el), ast[1:]
+        
+
 # Assumes `sstore`, `mstore`, `sload`, `mload`, will do vars.
 def lll_to_s_expr(ast):
+
     if type(ast) is list:
-        i = 0
-        ret = []
-        while i < len(ast) - 1:  # See if there are things being set.
-            el = ast[i]
-            if type(el) is list and len(el) > 0 and el[0].lower() == 'aref':
-                assert_len(el, 2)
-                if type(el[1]) is list and el[1][0].lower() == 'aref':
-                    assert_len(el, 2)  # (aref (aref <a>)) <b> -> (sstore <a> <b>)
-                    ret.append(['sstore', lll_to_s_expr(el[1][1]),
-                                lll_to_s_expr(ast[i+1])])
-                else:  # (aref <a>) <b> -> (mstore <a> <b>)
-                    ret.append(['mstore', lll_to_s_expr(el[1]),
-                                lll_to_s_expr(ast[i+1])])
-                i += 2
-            elif el in ['@','@@']:  # @<a> -> (mload <a>) , @@<a> -> (sload <a>)
-                ret.append([{'@':'mload', '@@':'sload'}[el], ast[i+1]])
-                i += 2
-            else:  # Just any statement.
-                ret.append(lll_to_s_expr(el))
-                i += 1
-        if i == len(ast)-1:  # (if the last one was +=2 this doesnt happen)
-            ret.append(lll_to_s_expr(ast[i]))
+        left, ret = ast, []
+        while len(left) > 0:
+            got, left = lll_to_s_expr_munch(left)
+            ret.append(got)
         return ret
     elif is_str(ast):
         if len(ast) == 0:
             raise Exception('Zero length strings not allowed in ast')
 
+        assert ast not in ['@@','@']
+
         if ast[0] == '@':  # @ straight onto a name.
+            assert len(ast) > 1
             if ast[1] == '@':
+                assert len(ast) > 2
                 return ['sload', ast[2:]]
             return ['mload', ast[1:]]
 
@@ -109,7 +117,8 @@ class LLLWriter:
     # rewriter.simple_macro can do it better.
     def write_lll_special_stream(self, stream, val, name, c):
         if name in ['mload','sload']:
-            assert len(val) == 2
+            if len(val) != 2:
+                raise Exception("%s input wrong length" % name, val)
             if c in ['@','@@']:
                 write_str(stream, c)
                 return self.write_lll_stream(stream, val[1])

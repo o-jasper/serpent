@@ -42,13 +42,3 @@ TestParser().test_case("bla 123 (45(678      af)sa faf((a sf))  (a) sfsa) ;do no
 # IMO Should have been caught in a test and not ended up downstream.
 for i in range(200):
     TestParser().test_1()
-
-# Thought it was a python bug somehow.. where are those zeros coming from...
-for i in range(200):
-    x = random()
-    s=io.StringIO()
-    s.write(to_str(x))
-    s.seek(0)
-    got = s.read()
-    if got != to_str(x):
-        raise Exception('python bug!?', got, to_str(x), x)

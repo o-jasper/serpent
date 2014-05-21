@@ -28,7 +28,7 @@ class GraphCode:
             self.graph = graph
         self.fr = fr
         self.uniqify = uniqify
-        self.cnt = {'lll':0, 'comment':0}
+        self.subnodes = {'lll':(False, "<lll>"), 'comment':(False, "")}
 
         if attrs is None:
             attrs = themes[theme]
@@ -61,15 +61,19 @@ class GraphCode:
             if len(ast) == 0:
                 return 'empty_list', []
 
-            if is_str(ast[0]) and str(ast[0]) in self.cnt:
-                self.cnt[ast[0]] += 1
-                repr_str = '<' + ast[0] + '_' + str(self.cnt[ast[0]]) + '>'
-                return repr_str, [[repr_str] + ast[1:]]
+            if is_str(ast[0]) and str(ast[0].lower()) in self.subnodes:
+                name = ast[0].lower()
+                use_pattern, pattern = self.subnodes[name]
+                if use_pattern:
+                    repr_str = pattern % name
+                    return repr_str, [[name] + ast[1:]]
+                else:
+                    return '', [[name] + ast[1:]]
             else:
                 ret_alt, ret_llls = [], []
                 for el in ast:
                     alt, llls = self.control_flow_fix(el)
-                    if alt != 'seq':
+                    if alt not in ['seq', '']:
                         ret_alt.append(alt)
                     ret_llls = ret_llls + llls
                 if len(ret_alt) == 0:
@@ -102,7 +106,7 @@ class GraphCode:
             self.graph.add_edge(edge)
 
         for lll in llls:
-            self.control_flow([lll[1]], added, 'lll')
+            self.control_flow([lll[1]], added, lll[0]) #'lll')
         return added
 
 
@@ -131,8 +135,8 @@ class GraphCode:
                     j = i + 1
 
                     if name == 'if':
-                        assert len(el) in [3,4]
-                        fr = self.cf_add_node(el[:2], fr, 'control', fr_which) # The condition.
+                        assert len(el) in [3,4]  # The condition.
+                        fr = self.cf_add_node(el[:2], fr, 'control', fr_which)
                         self.control_flow([el[2]], fr, 'true')
                         if len(el) == 4:
                             self.control_flow([el[3]], fr, 'false')
