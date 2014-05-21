@@ -7,18 +7,18 @@ clean:
 sg: sg_png
 cf: cf_png
 
-VISUALIZE=../bin/code_visualize.py
+VISUALIZE=../bin/code-visualize.py
 
-sg/sg_%.png: %.lsp ../visualize.py ../bin/code_visualize.py
+sg/sg_%.png: %.lsp ../visualize.py ../bin/code-visualize.py
 	$(VISUALIZE) $< $@ --which sg
 
-cf/cf_%.png: %.lsp ../visualize.py ../bin/code_visualize.py
+cf/cf_%.png: %.lsp ../visualize.py ../bin/code-visualize.py
 	$(VISUALIZE) $< $@
 
-sg/sg_%.svg: %.lsp ../visualize.py ../bin/code_visualize.py
+sg/sg_%.svg: %.lsp ../visualize.py ../bin/code-visualize.py
 	$(VISUALIZE) $< $@ --which sg
 
-cf/cf_%.svg: %.lsp ../visualize.py ../bin/code_visualize.py
+cf/cf_%.svg: %.lsp ../visualize.py ../bin/code-visualize.py
 	$(VISUALIZE) $< $@
 
 png: sg_png cf_png
