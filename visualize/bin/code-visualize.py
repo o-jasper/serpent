@@ -2,6 +2,7 @@
 
 import os.path
 import sys
+import io
 
 fromdir = os.path.dirname(__file__)
 sys.path.append(os.path.join(fromdir, '..'))
@@ -21,14 +22,38 @@ parser.add_argument('--which', default='cf',
                     help='What kind, sg|cf for straight graph/control flow.')
 parser.add_argument('--comments', default='no',
                     help='Link comments aswel')
+parser.add_argument('--text', default='serpent',
+                    help='How to write down code in nodes, serpent|lll')
+parser.add_argument('--symbols', default='yes',
+                    help='whether to turn >= etcetera into symbols.')
 args = parser.parse_args()
 
 from visualize import GraphCode
-from LLL_parser import LLLParser
+from LLL_parser import LLLParser, LLLWriter
+
+import utils
+import write_serpent  #serialize.
 
 
-def graph_file(which, fr, to, prog='dot', format=None, comment_name=None):
-    gc = GraphCode()
+def _write_fun(stream, ast):
+    internal = io.StringIO()
+    if args.text =='serpent':
+        write_serpent.serialize(utils.nodeify(ast), internal)
+    else:
+        LLLWriter().write_lll_stream(internal, ast)
+    internal.seek(0)
+    string = internal.read()
+    if args.symbols == 'yes':
+        string = string.replace('<=', '&le;').replace('>=', '&ge;')
+        string = string.replace('!=', '&ne;')
+
+    stream.write(string)
+
+
+def graph_file(which, fr, to, prog='dot', format=None, comment_name=None,
+               text='serpent'):
+    gc = GraphCode(write_fun=_write_fun)
+
     tree = LLLParser(comment_name=comment_name).parse_lll_file(fr)
     if which in ['sg']:
         g = gc.straight(['root'] + tree)
@@ -39,5 +64,7 @@ def graph_file(which, fr, to, prog='dot', format=None, comment_name=None):
         format = to[-3:]
     g.write(to, format=format, prog=prog)
 
+
 graph_file(args.which, args.input, args.output, args.prog,
-           args.format, 'comment' if args.comments == 'yes' else None)
+           args.format, 'comment' if args.comments == 'yes' else None,
+           text=args.text)
