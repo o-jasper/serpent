@@ -12,7 +12,7 @@ cases  = {'cond':({'_if':1,'else':0}, {}), 'case':({'of':1, 'default':0},{})}
 def after_tabs(stream, tabs, text):
     for i in range(tabs):
         stream.write(unicode('\t'))
-    stream.write(text)
+    stream.write(unicode(text))
 
 
 dont_space_it = ['!', '^', '^']
@@ -76,8 +76,12 @@ def serialize(ast, output='', tabs=0):
         return stream.read()
 
     if isinstance(ast, token):
-        after_tabs(output, tabs, unicode(ast.val + '\n'))
-    elif ast.fun in ['outer', 'seq']:
+        return after_tabs(output, tabs, unicode(ast.val + '\n'))
+    if isinstance(ast, (str, unicode)):
+        return after_tabs(output, tabs, unicode(ast + '\n'))
+        
+    assert isinstance(ast, astnode)
+    if ast.fun in ['outer', 'seq']:
         for el in ast.args:
             serialize(el, output, tabs)
     elif ast.fun == 'if':  # Make it fit the paradigm.

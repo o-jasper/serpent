@@ -39,6 +39,16 @@ def nodeify(s, fil='', line=0, char=0):
         nodes = map(lambda x: nodeify(x, *metadata), s[1:])
     return astnode(fun, nodes, *metadata)
 
+
+def denodeify(ast):
+    if isinstance(ast, token):
+        return detokenify(ast)
+    elif isinstance(ast, astnode):
+        ret = [ast.fun] + map(denodeify, ast.args)
+    else:
+        return el
+
+
 is_numeric = lambda x: isinstance(x, (int, long))
 is_string = lambda x: isinstance(x, (str, unicode))
 

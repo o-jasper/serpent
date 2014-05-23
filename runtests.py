@@ -14,25 +14,26 @@ while 1:
     i += 1
     print '================='
     text = '\n'.join(o).replace('\n\n', '\n')
-    print text
     ast = parser.parse(text)
+    print text
 
-    write_serpent.serialize(ast, sys.stdout)
+    text2 = str('\n' + write_serpent.serialize(ast) + '\n')
+    ast_cpy = parser.parse(text2)
+    if utils.denodeify(ast) != utils.denodeify(ast_cpy):
+        print( "BUG: does not match!", ast, ast_cpy)
 
-#
-#    
-#    print "AST:", ast
-#    print ""
-#    ast2 = rewriter.compile_to_lll(ast)
-#    print "LLL:", ast2
-#    print ""
-#    varz = rewriter.analyze(ast)
-#    print "Analysis: ", varz
-#    print ""
-#    aevm = compiler.compile_lll(ast2)
-#    print "AEVM:", ' '.join([str(x) for x in aevm])
-#    print ""
-#    code = compiler.assemble(aevm)
-#    print "Output:", code.encode('hex')
+    print "AST:", ast
+    print ""
+    ast2 = rewriter.compile_to_lll(ast)
+    print "LLL:", ast2
+    print ""
+    varz = rewriter.analyze(ast)
+    print "Analysis: ", varz
+    print ""
+    aevm = compiler.compile_lll(ast2)
+    print "AEVM:", ' '.join([str(x) for x in aevm])
+    print ""
+    code = compiler.assemble(aevm)
+    print "Output:", code.encode('hex')
     if i >= len(t):
         break
