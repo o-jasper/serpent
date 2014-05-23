@@ -22,24 +22,13 @@ class GraphCode:
     
     def __init__(self, graph=None, fr=None, uniqify=False, theme='basic', attrs=None,
                  write_fun=None, lllwriter=LLLWriter()):
-        if graph is None:
-            self.graph = pydot.Dot('from-tree', graph_type='digraph')
-        else:
-            self.graph = graph
+        self.graph = graph or pydot.Dot('from-tree', graph_type='digraph')
         self.fr = fr
         self.uniqify = uniqify
         self.subnodes = {'lll':(False, "<lll>"), 'comment':(False, "")}
 
-        if attrs is None:
-            attrs = themes[theme]
-        self.attrs = attrs
-
-        if write_fun is None:
-            def _write_fun(stream, tree):
-                lllwriter.write_lll_stream(stream, tree)
-
-            write_fun = _write_fun
-        self.write_fun = write_fun
+        self.attrs = attrs or themes[theme]
+        self.write_fun = write_fun or lllwriter.write_lll_stream
         
         self.i = 0
 
@@ -113,8 +102,7 @@ class GraphCode:
     def control_flow(self, ast, fr=None, fr_which='body_edge'):
         assert type(ast) is list
 
-        if fr is None:
-            fr = self.fr
+        fr = fr or self.fr
     
         i, j = 0, 0
         while i < len(ast):
@@ -172,8 +160,7 @@ class GraphCode:
 
     # Graph straight from tree.
     def straight(self, tree, fr=None):
-        if fr is None:
-            fr = self.fr
+        fr = fr or self.fr
 
         if type(tree) is list:
             if len(tree) > 0:
