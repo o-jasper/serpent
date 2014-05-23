@@ -5,11 +5,14 @@ token, astnode = utils.token, utils.astnode
 
 from parser import precedence
 
-bodied = {'init':[], 'code':[], 'while':[''], 'cond':'dont', 'case':[''], 'for':['', 'in']}
-cases  = {'cond':({'_if':[''],'else':[]}, {}), 'case':({'of':[''], 'default':[]},{})}
+bodied = {'init':[], 'code':[], 'while':[''],
+          'cond':'dont', 'case':[''], 'for':['', 'in']}
+cases  = {'cond':({'_if':[''], 'else':[]}, {}),
+          'case':({'of':[''], 'default':[]}, {})}
 
 
 the_tab = unicode('    ')
+
 
 def after_tabs(stream, tabs, text):
     for i in range(tabs):
@@ -18,6 +21,7 @@ def after_tabs(stream, tabs, text):
 
 
 dont_space_it = ['!', '^', '^']
+
 
 def serialize_expr(ast, open='(', close=')', between=', ', precscore=-1):
     if isinstance(ast, token):
@@ -56,18 +60,19 @@ def serialize_bodied(ast, output, tabs, by_name, bodied=bodied, cases=cases):
             output.write(unicode(names[i] + ' ' + serialize_expr(ast.args[i])))
         output.write(unicode(':\n'))
 
-    if ast.fun in cases:  #Note, it is devious, you can recurse it!
+    if ast.fun in cases:  # Recurses.
         i = 1
         allowed, deeper = cases[ast.fun]
         for el in ast.args[n:]:
             assert el.fun in allowed
-            serialize_bodied(el, output, tabs, el.fun, bodied=allowed, cases=deeper)
+            serialize_bodied(el, output, tabs, el.fun,
+                             bodied=allowed, cases=deeper)
     else:
         for el in ast.args[n:]:
             serialize(el, output, tabs + 1)
 
 
-def cond_args(args):
+def cond_args(args):  # Makes `if` fit the paradigm.
     o = [astnode('_if', args[:2])]
     if len(args) == 3:
         if isinstance(args[2], astnode) and args[2].fun == 'if':
@@ -75,6 +80,7 @@ def cond_args(args):
         else:
             o.append(astnode('else', [args[2]]))
     return o
+
 
 def serialize(ast, output='', tabs=0):
     if isinstance(output, (str,unicode)):

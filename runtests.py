@@ -20,7 +20,7 @@ while 1:
     text2 = str(write_serpent.serialize(ast))
     ast_cpy = parser.parse(text2)
     if utils.denodeify(ast) != utils.denodeify(ast_cpy):
-        print( "BUG: does not match!", ast, ast_cpy)
+        print("BUG: does not match!", ast, ast_cpy)
 
     print "AST:", ast
     print ""
