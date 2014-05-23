@@ -5,13 +5,15 @@ token, astnode = utils.token, utils.astnode
 
 from parser import precedence
 
-bodied = {'init':0, 'code':0, 'while':1, 'cond':1, 'case':1}
-cases  = {'cond':({'_if':1,'else':0}, {}), 'case':({'of':1, 'default':0},{})}
+bodied = {'init':[], 'code':[], 'while':[''], 'cond':'dont', 'case':[''], 'for':['', 'in']}
+cases  = {'cond':({'_if':[''],'else':[]}, {}), 'case':({'of':[''], 'default':[]},{})}
 
+
+the_tab = unicode('    ')
 
 def after_tabs(stream, tabs, text):
     for i in range(tabs):
-        stream.write(unicode('\t'))
+        stream.write(the_tab)
     stream.write(unicode(text))
 
 
@@ -25,7 +27,9 @@ def serialize_expr(ast, open='(', close=')', between=', ', precscore=-1):
         for el in ast[1:]:
             ret += between + serialize_expr(el, open, close, between)
         return ret + close
+
     assert isinstance(ast, astnode)
+
     if ast.fun in precedence:
         between = ast.fun if (ast.fun in dont_space_it) else ' ' + ast.fun + ' '
         open, close = ('', '') if precscore < precedence[ast.fun] else ('(',')')
@@ -40,23 +44,27 @@ def serialize_expr(ast, open='(', close=')', between=', ', precscore=-1):
 
 # Does elements that create their own body.
 def serialize_bodied(ast, output, tabs, by_name, bodied=bodied, cases=cases):
-    n = bodied[ast.fun]
-    if n == 0:
-        if n == 1:
-            after_tabs(output, tabs, by_name + ' ' + serialize_expr(ast.args[0]) + ':\n')
-        elif n >= 2:
-            after_tabs(output, tabs, by_name + serialize_expr(ast.args[:n]) + ':\n')
+    names = bodied[ast.fun]
+    n = len(names)
+    if names == 'dont':
+        n = 0
+    else:
+        if by_name[0] == '_':
+            by_name = by_name[1:]
+        after_tabs(output, tabs, by_name)
+        for i in range(n):
+            output.write(unicode(names[i] + ' ' + serialize_expr(ast.args[i])))
+        output.write(unicode(':\n'))
 
-        if ast.fun in cases:  #Note, it is devious, you can recurse it!
-            i = 1
-            allowed, deeper = cases[ast.fun]
-            for el in ast.args[n:]:
-                assert el.fun in allowed
-                serialize_bodied(el, output, tabs, el.fun,
-                                 bodied=allowed, cases=deeper)
-        else:
-            for el in ast.args[n:]:
-                serialize(el, output, tabs + 1)
+    if ast.fun in cases:  #Note, it is devious, you can recurse it!
+        i = 1
+        allowed, deeper = cases[ast.fun]
+        for el in ast.args[n:]:
+            assert el.fun in allowed
+            serialize_bodied(el, output, tabs, el.fun, bodied=allowed, cases=deeper)
+    else:
+        for el in ast.args[n:]:
+            serialize(el, output, tabs + 1)
 
 
 def cond_args(args):
@@ -76,10 +84,10 @@ def serialize(ast, output='', tabs=0):
         return stream.read()
 
     if isinstance(ast, token):
-        return after_tabs(output, tabs, unicode(ast.val + '\n'))
-    if isinstance(ast, (str, unicode)):
-        return after_tabs(output, tabs, unicode(ast + '\n'))
-        
+        return after_tabs(output, tabs, ast.val + '\n')
+    if isinstance(ast, (str, unicode)):  # NOTE: reckon it shouldnt be mixed.
+        return after_tabs(output, tabs, ast + '\n')
+
     assert isinstance(ast, astnode)
     if ast.fun in ['outer', 'seq']:
         for el in ast.args:
