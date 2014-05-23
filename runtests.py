@@ -15,10 +15,9 @@ while 1:
     print '================='
     text = '\n'.join(o).replace('\n\n', '\n')
     ast = parser.parse(text)
-    print(':' + text + ':')
+    print text
 
     text2 = str(write_serpent.serialize(ast))
-    print(':' + text2 + ':')
     ast_cpy = parser.parse(text2)
     if utils.denodeify(ast) != utils.denodeify(ast_cpy):
         print( "BUG: does not match!", ast, ast_cpy)
