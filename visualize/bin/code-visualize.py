@@ -26,6 +26,8 @@ parser.add_argument('--text', default='serpent',
                     help='How to write down code in nodes, serpent|lll')
 parser.add_argument('--symbols', default='yes',
                     help='whether to turn >= etcetera into symbols.')
+parser.add_argument('--theme', default='basic',
+                    help='name of theme to use.')
 args = parser.parse_args()
 
 import pydot
@@ -57,7 +59,7 @@ def graph_file(which, fr, to, prog='dot', format=None,
                comment_name=None, text='serpent'):
     graph = pydot.Dot('from-tree', graph_type='digraph')
     graph.set_fontname('Times-Bold')
-    gc = GraphCode(graph=graph, write_fun=_write_fun)
+    gc = GraphCode(graph=graph, write_fun=_write_fun, theme=args.theme)
 
     tree = LLLParser(comment_name=comment_name).parse_lll_file(fr)
     if which in ['sg']:
