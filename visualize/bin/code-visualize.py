@@ -28,6 +28,8 @@ parser.add_argument('--symbols', default='yes',
                     help='whether to turn >= etcetera into symbols.')
 parser.add_argument('--theme', default='basic',
                     help='name of theme to use.')
+parser.add_argument('--uniqify', default='yes',
+                    help='Whether to force all nodes to be unique, default yes. No _does not make sense for control flow!')
 args = parser.parse_args()
 
 import pydot
@@ -59,7 +61,8 @@ def graph_file(which, fr, to, prog='dot', format=None,
                comment_name=None, text='serpent'):
     graph = pydot.Dot('from-tree', graph_type='digraph')
     graph.set_fontname('Times-Bold')
-    gc = GraphCode(graph=graph, write_fun=_write_fun, theme=args.theme)
+    gc = GraphCode(graph=graph, write_fun=_write_fun, theme=args.theme,
+                   uniqify=args.uniqify.lower() in ['yes', 'true'])
 
     tree = LLLParser(comment_name=comment_name).parse_lll_file(fr)
     if which in ['sg']:

@@ -22,7 +22,7 @@ themes = {'basic' : {'default'    : [('fontname', 'Arial')],
 
 class GraphCode:
     
-    def __init__(self, graph=None, fr=None, uniqify=False, theme='basic', attrs=None,
+    def __init__(self, graph=None, fr=None, uniqify=True, theme='basic', attrs=None,
                  write_fun=None, lllwriter=LLLWriter()):
         self.graph = graph or pydot.Dot('from-tree', graph_type='digraph')
         self.fr = fr
@@ -86,20 +86,29 @@ class GraphCode:
             return dict(val)
 
 
+    def add_node(self, added, which='default', uniqify=None):
+        if uniqify is None:
+            uniqify = self.uniqify
+
+        if is_str(added):
+            self.i += 1
+            node = pydot.Node(str(self.i) if uniqify else added)
+            node.obj_dict['attributes'] = self.get_attrs(which)
+            node.set_label(added)
+            added = node
+
+        self.graph.add_node(added)
+        return added
+
+
     def cf_add_node(self, added, fr, which, edge_which):
         llls = []
         if type(added) is list:
             added, llls = self.control_flow_fix(added)
             added = self.cf_expr_str(added)
-        if is_str(added):
-            self.i += 1
-            node = pydot.Node(str(self.i))
-            node.obj_dict['attributes'] = self.get_attrs(which)
 
-            node.set_label(added)
-            added = node
+        added = self.add_node(added, which)
 
-        self.graph.add_node(added)
         if fr is not None:
             edge = pydot.Edge(fr, added)
             attrs = self.get_attrs(edge_which)
@@ -160,15 +169,9 @@ class GraphCode:
             self.cf_add_node(ast[j:], fr, 'body', fr_which)
         return self.graph
 
-
-    def sg_add_node(self, added, fr):
-       # TODO bleh how do you get them unique.. Why isnt it unique by default?!
-        if self.uniqify:
-            while added in store:
-                added = '.' + added
-                store[added] = True
-
-        node = pydot.Node(added)
+# Note: all the 'straight graph' stuff is a slap-on.
+    def sg_add_node(self, added, fr=None, uniqify=None):
+        node = self.add_node(added, uniqify=uniqify)
         self.graph.add_node(node)
         if fr is not None:
             self.graph.add_edge(pydot.Edge(fr, node))
