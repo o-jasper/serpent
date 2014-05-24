@@ -3,13 +3,38 @@ from io import StringIO
 import utils
 token, astnode = utils.token, utils.astnode
 
-from parser import precedence
+precedence = {
+    '^': 1,
+    '*': 2,
+    '/': 3,
+    '%': 4,
+    '#/': 2,
+    '#%': 2,
+    '+': 3,
+    '-': 3,
+    '<': 4,
+    '<=': 4,
+    '>': 4,
+    '>=': 4,
+    '&': 5,
+    '=': 5,
+    '==': 5,
+    '!=': 5,    
+    'and': 6,
+    '&&': 6,
+    'or': 7,
+    '||': 7,
+    '!': 0
+}
 
-bodied = {'init':[], 'code':[], 'while':[''],
-          'cond':'dont', 'case':[''], 'for':['', 'in']}
+
+bodied = {'init':[], 'code':[],
+          'while':[''],
+          'cond':'dont',
+          'case':[''],
+          'for':['', 'in']}
 cases  = {'cond':({'_if':[''], 'else':[]}, {}),
           'case':({'of':[''], 'default':[]}, {})}
-
 
 the_tab = unicode('    ')
 
@@ -27,11 +52,13 @@ def serialize_expr(ast, open='(', close=')', between=', ', precscore=-1):
     if isinstance(ast, token):
         return ast.val
     elif type(ast) is list:
-        ret = open + serialize_expr(ast[0])
-        for el in ast[1:]:
-            ret += between + serialize_expr(el, open, close, between)
-        return ret + close
-
+        if len(ast) > 0:
+            ret = open + serialize_expr(ast[0])
+            for el in ast[1:]:
+                ret += between + serialize_expr(el, open, close, between)
+            return ret + close
+        else:
+            return open + close
     assert isinstance(ast, astnode)
 
     if ast.fun in precedence:
@@ -42,6 +69,9 @@ def serialize_expr(ast, open='(', close=')', between=', ', precscore=-1):
         return serialize_expr(ast.args[0]) + '[' + serialize_expr(ast.args[1]) + ']'
     elif ast.fun == 'array_lit':
         return serialize_expr(ast.args, '[', ']')
+    elif ast.fun == 'str':
+        assert len(ast.args) == 1
+        return '"' + ast.args[0].val + '"'
     else:
         return ast.fun + serialize_expr(ast.args)
 
