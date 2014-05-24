@@ -8,17 +8,20 @@ from python_2_3_compat import to_str, is_str
 from LLL_parser import LLLWriter
 
 
-themes = {'basic' : {'default'    : [('fontname', 'Arial')],
-                     'body'       : [('shape', 'box')],
-                     'control'    : [],
-                     'body_edge'  : [('penwidth', '2.0')],
-                     'true'       : [('label','true')],
-                     'false'      : [('label','false')],
-                     'plain_edge' : [],
-                     'for_edge'   : [('label','loop'), ('back_too', 'plain_edge')], #('dir','both')],
-                     'lll'        : [('label','lll')],
-                     'comment'    : [],
-                     'debug'      : [('label','bugifshown')]}}
+themes = {'basic' :
+           {'default'      : [('fontname', 'Arial')],
+            'default_edge' : [],
+            'body'         : [('shape', 'box')],
+            'control'      : [],
+            'body_edge'    : [('penwidth', '2.0')],
+            'true'         : [('label','true')],
+            'false'        : [('label','false')],
+            'plain_edge'   : [],
+            'for_edge'     : [('label','loop'), ('back_too', 'plain_edge')],
+#('dir','both')],
+            'lll'          : [('label','lll')],
+            'comment'      : [],
+            'debug'        : [('label','bugifshown')]}}
 
 class GraphCode:
     
@@ -101,6 +104,17 @@ class GraphCode:
         return added
 
 
+    def add_edge(self, fr, to, edge_which='default_edge'):
+        edge = pydot.Edge(fr, to)
+        attrs = self.get_attrs(edge_which)
+        edge.obj_dict['attributes'] = attrs
+        self.graph.add_edge(edge)
+        if 'back_too' in attrs:  # Option to make a backward edge.
+            back = pydot.Edge(to, fr)
+            back.obj_dict['attributes'] = self.get_attrs(attrs['back_too'])
+            self.graph.add_edge(back)
+
+
     def cf_add_node(self, added, fr, which, edge_which):
         llls = []
         if type(added) is list:
@@ -110,14 +124,7 @@ class GraphCode:
         added = self.add_node(added, which)
 
         if fr is not None:
-            edge = pydot.Edge(fr, added)
-            attrs = self.get_attrs(edge_which)
-            edge.obj_dict['attributes'] = attrs
-            self.graph.add_edge(edge)
-            if 'back_too' in attrs:  # Option to make a backward edge.
-                back = pydot.Edge(added, fr)
-                back.obj_dict['attributes'] = self.get_attrs(attrs['back_too'])
-                self.graph.add_edge(back)
+            self.add_edge(fr, added, edge_which)
 
         for lll in llls:
             self.control_flow([lll[1]], added, lll[0]) #'lll')
@@ -172,9 +179,8 @@ class GraphCode:
 # Note: all the 'straight graph' stuff is a slap-on.
     def sg_add_node(self, added, fr=None, uniqify=None):
         node = self.add_node(added, uniqify=uniqify)
-        self.graph.add_node(node)
         if fr is not None:
-            self.graph.add_edge(pydot.Edge(fr, node))
+            self.add_edge(fr, node)
         return node
 
     # Graph straight from tree.
