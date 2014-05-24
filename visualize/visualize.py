@@ -8,16 +8,17 @@ from python_2_3_compat import to_str, is_str
 from LLL_parser import LLLWriter
 
 
-themes = {'basic' : {'default'  : [('fontname', 'Arial')],
-                     'body'     : [('shape', 'box')],
-                     'control'  : [],
-                     'body_edge': [('penwidth', '2.0')],
-                     'true'     : [('label','true')],
-                     'false'    : [('label','false')],
-                     'for_edge' : [('label','loop'), ('dir','both')],
-                     'lll'      : [('label','lll')],
-                     'comment'  : [],
-                     'debug'    : [('label','bugifshown')]}}
+themes = {'basic' : {'default'    : [('fontname', 'Arial')],
+                     'body'       : [('shape', 'box')],
+                     'control'    : [],
+                     'body_edge'  : [('penwidth', '2.0')],
+                     'true'       : [('label','true')],
+                     'false'      : [('label','false')],
+                     'plain_edge' : [],
+                     'for_edge'   : [('label','loop'), ('back_too', 'plain_edge')], #('dir','both')],
+                     'lll'        : [('label','lll')],
+                     'comment'    : [],
+                     'debug'      : [('label','bugifshown')]}}
 
 class GraphCode:
     
@@ -26,7 +27,7 @@ class GraphCode:
         self.graph = graph or pydot.Dot('from-tree', graph_type='digraph')
         self.fr = fr
         self.uniqify = uniqify
-        self.subnodes = {'lll':(False, "<lll>"), 'comment':(False, "")}
+        self.subnodes = {'lll':"_lll_", 'comment':""}
 
         self.attrs = attrs or themes[theme]
         self.calculated_attrs = {}
@@ -50,16 +51,12 @@ class GraphCode:
     def control_flow_fix(self, ast):
         if type(ast) == list:
             if len(ast) == 0:
-                return 'empty_list', []
+                return '()', []
 
             if is_str(ast[0]) and str(ast[0].lower()) in self.subnodes:
                 name = ast[0].lower()
-                use_pattern, pattern = self.subnodes[name]
-                if use_pattern:
-                    repr_str = pattern % name
-                    return repr_str, [[name] + ast[1:]]
-                else:
-                    return '', [[name] + ast[1:]]
+                use_str = self.subnodes[name]
+                return use_str, [[name] + ast[1:]]
             else:
                 ret_alt, ret_llls = [], []
                 for el in ast:
@@ -68,7 +65,7 @@ class GraphCode:
                         ret_alt.append(alt)
                     ret_llls = ret_llls + llls
                 if len(ret_alt) == 0:
-                    ret_alt = ['<seq>']
+                    ret_alt = ['_seq_']
                 return ret_alt, ret_llls
         else:
             return ast, []
@@ -105,11 +102,13 @@ class GraphCode:
         self.graph.add_node(added)
         if fr is not None:
             edge = pydot.Edge(fr, added)
-            if type(edge_which) is list:
-                edge.obj_dict['attributes'] = dict(edge_which)
-            else:
-                edge.obj_dict['attributes'] = self.get_attrs(edge_which)
+            attrs = self.get_attrs(edge_which)
+            edge.obj_dict['attributes'] = attrs
             self.graph.add_edge(edge)
+            if 'back_too' in attrs:  # Option to make a backward edge.
+                back = pydot.Edge(added, fr)
+                back.obj_dict['attributes'] = self.get_attrs(attrs['back_too'])
+                self.graph.add_edge(back)
 
         for lll in llls:
             self.control_flow([lll[1]], added, lll[0]) #'lll')
