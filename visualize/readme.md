@@ -20,6 +20,9 @@ once the current `~/.bashrc` is in use, you can directly call the program.
 `visualize/bin/code_visualize.py` is intended to run as program. It requires the
 presence of `python2`.
 
+Once it works, to see what it can do use
+`cd visualize/examples/; make show_off.html; $BROWER show_off.html`.
+
 ### Straight graph
 Note that the `GraphCode().straight` visualization, loses a lot of information.
 Because it doesnt show the order of the arguments.
