@@ -10,12 +10,18 @@ cf: cf_png
 VISUALIZE=../bin/code-visualize.py
 
 sg/sg_%.png: %.lsp ../visualize.py ../bin/code-visualize.py
+	$(VISUALIZE) $< $@ --which sg --uniqify no
+
+sg/sg_uniq_%.png: %.lsp ../visualize.py ../bin/code-visualize.py
 	$(VISUALIZE) $< $@ --which sg
 
 cf/cf_%.png: %.lsp ../visualize.py ../bin/code-visualize.py
 	$(VISUALIZE) $< $@
 
 sg/sg_%.svg: %.lsp ../visualize.py ../bin/code-visualize.py
+	$(VISUALIZE) $< $@ --which sg --uniqify no
+
+sg/sg_uniq_%.svg: %.lsp ../visualize.py ../bin/code-visualize.py
 	$(VISUALIZE) $< $@ --which sg
 
 cf/cf_%.svg: %.lsp ../visualize.py ../bin/code-visualize.py
@@ -29,3 +35,9 @@ sg_png: sg/sg_Bank.png sg/sg_kv.png sg/sg_NameReg.png sg/sg_Splitter.png sg/sg_S
 
 cf_svg: cf/cf_Bank.svg cf/cf_kv.svg cf/cf_NameReg.svg cf/cf_Splitter.svg cf/cf_SubCurrency.svg
 cf_png: cf/cf_Bank.png cf/cf_kv.png cf/cf_NameReg.png cf/cf_Splitter.png cf/cf_SubCurrency.png
+
+sg_uniq_svg: sg/sg_uniq_Bank.svg sg/sg_uniq_kv.svg sg/sg_uniq_NameReg.svg sg/sg_uniq_Splitter.svg sg/sg_uniq_SubCurrency.svg
+sg_uniq_png: sg/sg_uniq_Bank.png sg/sg_uniq_kv.png sg/sg_uniq_NameReg.png sg/sg_uniq_Splitter.png sg/sg_uniq_SubCurrency.png
+
+show_off.html: show_off.sh png sg_uniq_png
+	sh show_off.sh > show_off.html
