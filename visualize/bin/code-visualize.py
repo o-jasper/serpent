@@ -28,6 +28,8 @@ parser.add_argument('--symbols', default='yes',
                     help='whether to turn >= etcetera into symbols.')
 args = parser.parse_args()
 
+import pydot
+
 from visualize import GraphCode
 from LLL_parser import LLLParser, LLLWriter
 
@@ -47,12 +49,15 @@ def _write_fun(stream, ast):
         string = string.replace('<=', '&le;').replace('>=', '&ge;')
         string = string.replace('!=', '&ne;')
 
-    stream.write(string)
+    if string != '':
+        stream.write(string[:-1] if string[-1]=='\n' else string)
 
 
-def graph_file(which, fr, to, prog='dot', format=None, comment_name=None,
-               text='serpent'):
-    gc = GraphCode(write_fun=_write_fun)
+def graph_file(which, fr, to, prog='dot', format=None,
+               comment_name=None, text='serpent'):
+    graph = pydot.Dot('from-tree', graph_type='digraph')
+    graph.set_fontname('Times-Bold')
+    gc = GraphCode(graph=graph, write_fun=_write_fun)
 
     tree = LLLParser(comment_name=comment_name).parse_lll_file(fr)
     if which in ['sg']:

@@ -8,7 +8,8 @@ from python_2_3_compat import to_str, is_str
 from LLL_parser import LLLWriter
 
 
-themes = {'basic' : {'body'     : [('shape', 'box')],
+themes = {'basic' : {'default'  : [('fontname', 'Arial')],
+                     'body'     : [('shape', 'box')],
                      'control'  : [],
                      'body_edge': [('penwidth', '2.0')],
                      'true'     : [('label','true')],
@@ -28,6 +29,7 @@ class GraphCode:
         self.subnodes = {'lll':(False, "<lll>"), 'comment':(False, "")}
 
         self.attrs = attrs or themes[theme]
+        self.calculated_attrs = {}
         self.write_fun = write_fun or lllwriter.write_lll_stream
         
         self.i = 0
@@ -72,6 +74,21 @@ class GraphCode:
             return ast, []
 
 
+    def get_attrs(self, of):
+        if of not in self.attrs:
+            return self.atts['default']
+        elif of in self.calculated_attrs:
+            return dict(self.calculated_attrs[of])
+        else:
+            val = dict(self.attrs[of])
+            for sub in (val['derive'] if 'derive' in val else []) + ['default']:
+                for el in self.attrs[sub]:
+                    if el[0] not in val:
+                        val[el[0]] = el[1]
+            self.calculated_attrs[of] = val
+            return dict(val)
+
+
     def cf_add_node(self, added, fr, which, edge_which):
         llls = []
         if type(added) is list:
@@ -80,8 +97,8 @@ class GraphCode:
         if is_str(added):
             self.i += 1
             node = pydot.Node(str(self.i))
-            if which in self.attrs:
-                node.obj_dict['attributes'] = dict(self.attrs[which])
+            node.obj_dict['attributes'] = self.get_attrs(which)
+
             node.set_label(added)
             added = node
 
@@ -91,7 +108,7 @@ class GraphCode:
             if type(edge_which) is list:
                 edge.obj_dict['attributes'] = dict(edge_which)
             else:
-                edge.obj_dict['attributes'] = dict(self.attrs[edge_which])
+                edge.obj_dict['attributes'] = self.get_attrs(edge_which)
             self.graph.add_edge(edge)
 
         for lll in llls:

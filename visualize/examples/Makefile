@@ -22,6 +22,7 @@ cf/cf_%.svg: %.lsp ../visualize.py ../bin/code-visualize.py
 	$(VISUALIZE) $< $@
 
 png: sg_png cf_png
+svg: sg_svg cf_svg
 
 sg_svg: sg/sg_Bank.svg sg/sg_kv.svg sg/sg_NameReg.svg sg/sg_Splitter.svg sg/sg_SubCurrency.svg
 sg_png: sg/sg_Bank.png sg/sg_kv.png sg/sg_NameReg.png sg/sg_Splitter.png sg/sg_SubCurrency.png
