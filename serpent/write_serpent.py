@@ -36,7 +36,6 @@ bodied = {'init':[], 'code':[],
 cases  = {'cond':({'_if':[''], 'else':[]}, {}),
           'case':({'of':[''], 'default':[]}, {})}
 
-
 the_tab = unicode('    ')
 
 
@@ -70,6 +69,9 @@ def serialize_expr(ast, open='(', close=')', between=', ', precscore=-1):
         return serialize_expr(ast.args[0]) + '[' + serialize_expr(ast.args[1]) + ']'
     elif ast.fun == 'array_lit':
         return serialize_expr(ast.args, '[', ']')
+    elif ast.fun == 'str':
+        assert len(ast.args) == 1
+        return '"' + ast.args[0].val + '"'
     else:
         return ast.fun + serialize_expr(ast.args)
 
