@@ -21,7 +21,7 @@ once the current `~/.bashrc` is in use, you can directly call the program.
 presence of `python2`.
 
 Once it works, to see what it can do use
-`cd visualize/examples/; make show_off.html; $BROWER show_off.html`.
+`cd visualize/examples/; make show_off.html; $BROWSER show_off.html`.
 
 ### Straight graph
 Note that the `GraphCode().straight` visualization, loses a lot of information.

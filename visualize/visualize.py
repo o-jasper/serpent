@@ -19,7 +19,7 @@ themes = {'basic' :
             'plain_edge'   : [],
             'for_edge'     : [('label','loop'), ('back_too', 'plain_edge')],
 #('dir','both')],
-            'lll'          : [('label','lll')],
+            'lll'          : [('label',' LLL')],
             'comment'      : [],
             'debug'        : [('label','bugifshown')]}}
 
@@ -30,7 +30,7 @@ class GraphCode:
         self.graph = graph or pydot.Dot('from-tree', graph_type='digraph')
         self.fr = fr
         self.uniqify = uniqify
-        self.subnodes = {'lll':"_lll_", 'comment':""}
+        self.subnodes = {'lll':"_LLL_", 'comment':""}
 
         self.attrs = attrs or themes[theme]
         self.calculated_attrs = {}
