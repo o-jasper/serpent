@@ -1,0 +1,42 @@
+// From http://etherscripter.com/
+
+// Last Will & Testament using a "dead-man's-switch"
+// If the contract isn't touched by the creator at least once per month, he's dead
+// Therefore, split all funds among the heirs
+
+if !contract.storage["_run_before_"]:
+  // On contract creation, record the creator
+  contract.storage["CREATOR"] = tx.origin
+  contract.storage["_run_before_"] = 1
+else:
+  // A future transaction received from the creator does three things:
+  //     1) It's proves he's alive and supresses distribution for another 30 days
+  //     2) It naturally increases the contract's balance by the amount of the transaction value
+  //     3) It optionally supplies a new list of heirs
+  if tx.origin == contract.storage["CREATOR"]:
+    // Here we record the time of this touch by the creator. He's still alive.
+    contract.storage["LAST_TOUCH"] = block.timestamp
+    if msg.datasize > 0:
+      // The creator defines heirs by supplying their payment addresses as (padded 32-byte) inputs to the contract
+      // He can change these by supplying a new set of addresses which replaces all of the old set
+      while i <= msg.datasize:
+        // each heir will be recorded for future reference in the storage range 1000+
+        i = (i + 1)
+        contract.storage[(1000 + i)] = msg.data[(i - 1)]
+      while i <= contract.storage["HEIR_COUNT"]:
+        // any extra former heirs are removed
+        i = (i + 1)
+        contract.storage[(1000 + i)] = 0
+      // remember how many heirs we have for later
+      contract.storage["HEIR_COUNT"] = msg.datasize
+  else:
+    // A transaction received by anyone else triggers distribution to heirs if we haven't heard from the creator
+    // (there are 2,592,000 seconds in a month)
+    if block.timestamp > (contract.storage["LAST_TOUCH"] + 2592000):
+      // calculate the equal portion for each heir
+      PORTION = (contract.balance / contract.storage["HEIR_COUNT"])
+      // distribute the portions out to the heirs
+      while i < contract.storage["HEIR_COUNT"]:
+        send(contract.storage[(1000 + i)], PORTION, (tx.gas - 100))
+        i = (i + 1)
+

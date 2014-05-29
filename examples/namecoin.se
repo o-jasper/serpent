@@ -1,7 +1,7 @@
 // Namecoin
 
 if !contract.storage[msg.data[0]]: # Is the key not yet taken?
-    # Then take it!
+    // Then take it!
     contract.storage[msg.data[0]] = msg.data[1]
     return(1)
 else:

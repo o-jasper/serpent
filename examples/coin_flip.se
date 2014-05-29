@@ -1,0 +1,11 @@
+// Coin flipping from http://etherscripter.com/
+
+if !contract.storage["_run_before_"]:
+  // Coin flipping smart contract
+  contract.storage["_run_before_"] = 1
+else:
+  //  When the time in seconds is even, consider it a winning flip
+  if (block.timestamp % 2) == 0:
+    // On a winning flip, the sender gets double their money back
+    send(tx.origin, (msg.value * 2), (tx.gas - 100))
+

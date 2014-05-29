@@ -1,0 +1,44 @@
+
+if !contract.storage["_run_before_"]:
+  // Rock, Paper, Scissors
+  contract.storage[("PLAYER" + 1)] = 0xb7b2e5e12992267f85455ffee1435f02760402f0
+  contract.storage[("PLAYER" + 2)] = 0xfeab802c014588f08bfee2741086c37582b30dc2
+  contract.storage[0xb7b2e5e12992267f85455ffee1435f02760402f0] = 1
+  contract.storage[0xfeab802c014588f08bfee2741086c37582b30dc2] = 2
+  contract.storage["_run_before_"] = 1
+else:
+  PLAYER_NUM = contract.storage[msg.sender]
+  contract.storage[("CHOICE" + PLAYER_NUM)] = msg.data[0]
+  contract.storage[("IN_BLOCK" + PLAYER_NUM)] = block.number
+  // Ensure both players' choices came in at the same time. (No peeking!)
+  if contract.storage[("IN_BLOCK" + 1)] != contract.storage[("IN_BLOCK" + 2)]:
+    stop
+  // Label each player's choice for easy reference
+  CHOICE1 = contract.storage[("CHOICE" + 1)]
+  CHOICE2 = contract.storage[("CHOICE" + 2)]
+  // If it's a tie, nobody wins, so stop here
+  if CHOICE1 == CHOICE2:
+    stop
+  // Unless both players made a valid choice, stop here. (No "dynamite" allowed!)
+  if !(((CHOICE1 == "ROCK" or (CHOICE1 == "PAPER" or CHOICE1 == "SCISSORS")) and (CHOICE2 == "ROCK" or (CHOICE2 == 
+"PAPER" or CHOICE2 == "SCISSORS")))):
+    stop
+  // Check each valid combo to determine the winner
+  if CHOICE1 == "ROCK":
+    if CHOICE2 == "SCISSORS":
+      WINNER = 1
+    else:
+      WINNER = 2
+  if CHOICE1 == "PAPER":
+    if CHOICE2 == "ROCK":
+      WINNER = 1
+    else:
+      WINNER = 2
+  if CHOICE1 == "SCISSORS":
+    if CHOICE2 == "PAPER":
+      WINNER = 1
+    else:
+      WINNER = 2
+  // Pay the winner
+  send(contract.storage[("PLAYER" + WINNER)], contract.balance, (tx.gas - 100))
+

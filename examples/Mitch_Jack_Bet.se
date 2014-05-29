@@ -1,0 +1,29 @@
+// From http://etherscripter.com/
+
+if !contract.storage["_run_before_"]:
+  // Simple Bet v2
+  // Mitch bets Jack that BTC will be over $2000 by Dec 5, 2014
+  // This "init" code runs one time only when the contract is first created
+  // These addresses are fake but you can see the format
+  contract.storage["Mitch"] = 0xf4b7cc7faa866a2275972317598e7d936cfc9adc
+  contract.storage["Jack"] = 0x52c5535efae9bd86e04c627aa5c716a392358c5e
+  contract.storage["_run_before_"] = 1
+else:
+  // Grabbing outside data like the BTC price will be available eventually...
+  // ...by asking a "data feed" contract once the ecosystem evolves.
+  // Until then, we can take the data supplied to the contract as the BTC price.
+  // We use a temp slot here since we don't need to store it between runs.
+  BTC = msg.data[0]
+  // We can use an 'OR' block here to avoid duplicating the code for each person
+  if (msg.sender == contract.storage["Mitch"] or msg.sender == contract.storage["Jack"]):
+    // block.timestamp will be seconds elapsed since 1970 GMT.
+    // So for 12/04/2015 that's 1449187200
+    if block.timestamp > 1449187200:
+      if BTC > 2000:
+        // If BTC is over 2000 pay off Mitch
+        send(contract.storage["Mitch"], contract.balance, (tx.gas - 100))
+      else:
+        // Otherwise it must not be over 2000 so pay off Jack
+        send(contract.storage["Jack"], contract.balance, (tx.gas - 100))
+  // We don't need explicit "stop" blocks since contract will stop when it reaches the end.
+

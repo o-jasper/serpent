@@ -46,6 +46,8 @@ def test_on_text(text):
 
 
 def test_on_file(file):
+    print ''
+    print '** ', file
     t = open(file).readlines()
     i = 0
     while True:
@@ -60,10 +62,21 @@ def test_on_file(file):
         if i >= len(t):
             break
 
-
+# Commented out => problem with either code or example.
+# (todo)Also bug indicated in line 144.
 for f in ['tests.txt',
-          'examples/mul2.se', 'examples/namecoin.se',
-          # Currently dont work, latter is fixed by #33
-          'examples/returnten.se', 'examples/subcurrency.se'
-          ]:
+#    'examples/coin_flip.se',
+    'examples/Last_Will.se',
+    'examples/namecoin.se',
+#    'examples/sales_contract.se',
+    'examples/toothfairy.se',
+#    'examples/Insurance_Policy.se',
+#    'examples/Mitch_Jack_Bet.se',
+    'examples/returnten.se',
+    'examples/subcurrency.se',
+#    'examples/vote_registration.se',
+#    'examples/I_WANT_HALF.se',
+    'examples/mul2.se',
+#    'examples/RockPaperScissors.se',
+    'examples/Swear_jar.se']:
     test_on_file(f)

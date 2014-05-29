@@ -1,0 +1,35 @@
+// From http://etherscripter.com/
+// Swear jar
+
+if !contract.storage["_run_before_"]:
+  // "Swear Jar" - An informal method among groups to self-discourage bad behavior
+  // (swearing, being late for meetings, smoking, missing a workout, etc.)
+  // Members voluntarily pay in for each infraction & the best-behaved gets the pot each month
+  contract.storage["_run_before_"] = 1
+else:
+  // First add this caller to the participant list if they are new and give them a minimal total
+  CALLER_TOTAL = contract.storage[msg.sender]
+  if CALLER_TOTAL == 0:
+    contract.storage[contract.storage["NEXT_MEMBER_SPOT"]] = msg.sender
+    contract.storage["NEXT_MEMBER_SPOT"] = (contract.storage["NEXT_MEMBER_SPOT"] + 1)
+    contract.storage[msg.sender] = 1
+  // Next update their infraction total for the world to see (social pressure)
+  contract.storage[msg.sender] = (CALLER_TOTAL + msg.value)
+  // If it's a month (2592000 seconds) since the last time, find the best-behaved member to pay off
+  if contract.storage["LAST_EMPTY_TIME"] < (block.timestamp - 2592000):
+    contract.storage["LAST_EMPTY_TIME"] = block.timestamp
+    // Initialize the "best total" to something terribly high. (We'll see why later)
+    BEST_TOTAL = 99999999999*10^18
+    // Loop through members looking for the best behaved (the one with the lowest total)
+    while i < contract.storage["NEXT_MEMBER_SPOT"]:
+      ONE_MEMBER = contract.storage[i]
+      ONE_MEMBER_TOTAL = contract.storage[ONE_MEMBER]
+      if ONE_MEMBER_TOTAL < BEST_TOTAL:
+        // Label the best one so far. (Early registration breaks a tie)
+        BEST_MEMBER = ONE_MEMBER
+        BEST_TOTAL = ONE_MEMBER_TOTAL
+        // Reset each score to the minimum for the coming  month
+        contract.storage[ONE_MEMBER] = 1
+      i = (i + 1)
+    send(BEST_MEMBER, contract.balance, (tx.gas - 100))
+

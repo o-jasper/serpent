@@ -1,0 +1,17 @@
+# From http://etherscripter.com/
+
+if !contract.storage["_run_before_"]:
+  // *** An Ethereum smart contract to sell a website for "5000 by March"
+  // First, store buyer's ethereum address:
+  contract.storage["BUYER"] = 0x6af26739b9ffef8aa2985252e5357fde
+  // Then, store seller's ethereum address:
+  contract.storage["SELLER"] = 0xfeab802c014588f08bfee2741086c375
+  // April 1, 2014 is 1396310400 in "computer time"
+  contract.storage["DEADLINE"] = 1396310400
+  contract.storage["_run_before_"] = 1
+else:
+  // If the agreed amount is received on time...
+  if (contract.balance >= 5000*10^18 and block.timestamp <= contract.storage["DEADLINE"]):
+    // ... then designate the buyer as the new website admin and pay the seller
+    contract.storage["WEBSITE_ADMIN"] = contract.storage["BUYER"]
+    send(contract.storage["SELLER"], contract.balance, (tx.gas - 100))

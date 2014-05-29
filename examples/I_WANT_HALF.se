@@ -1,0 +1,43 @@
+if !contract.storage["_run_before_"]:
+  // "I WANT HALF!" Marriage Smart Contract [based on the idea by @mids106 et al]
+  // At contract creation, we store the sender as partner_1 with partner_2 given as the 1st data item
+  contract.storage["PARTNER_1"] = tx.sender
+  contract.storage["PARTNER_2"] = msg.data[0]
+  contract.storage["STATE"] = "PROPOSED"
+  // Partner_1 has now "PROPOSED" to partner_2
+  contract.storage["_run_before_"] = 1
+else:
+  if contract.storage["STATE"] == "PROPOSED":
+    //  Partner_2 can accept the proposal by sending in a transaction with partner_1 given as the first data item
+    if (tx.origin == "PARTNER_2" and msg.data[0] == contract.storage["PARTNER_1"]):
+      contract.storage["STATE"] = "MARRIED"
+    // Partner_1 and Partner_2 are now "MARRIED"!
+  if (contract.storage["STATE"] == "MARRIED" and (tx.origin == "PARTNER_1" or tx.origin == "PARTNER_2")):
+    // Once married, the contract is a "joint" account and each partner must send in the same instruction to make 
+a withdraw
+    // A valid withdrawal instruction is an incoming transaction where:
+    // 1st input is the withdraw code, 2nd input is the destination address, and 3rd input is the amount
+    if msg.data[0] == "WITHDRAW":
+      if (contract.storage["WITHDRAW_CREATOR"] != tx.origin and (msg.data[(2 - 1)] == 
+contract.storage["WITHDRAW_TO"] and msg.data[(3 - 1)] == contract.storage["WITHDRAW_AMOUNT"])):
+        // If a withdraw request is already pending from the other partner and this request matches, then do it.
+        send(contract.storage["WITHDRAW_TO"], contract.storage["WITHDRAW_AMOUNT"], (tx.gas - 100))
+      else:
+        // this is a new withdraw request; store it as pending until a matching request is received from other 
+partner
+        contract.storage["WITHDRAW_TO"] = msg.data[(2 - 1)]
+        contract.storage["WITHDRAW_AMOUNT"] = msg.data[(3 - 1)]
+        contract.storage["WITHDRAW_CREATOR"] = tx.origin
+    // Once married, the partners must both agree in order to get divorced and split the pot. I WANT HALF!
+    if msg.data[0] == "DIVORCE":
+      if contract.storage["DIVORCE_CREATOR"] != tx.origin:
+        // a divorce request is already pending and 2nd party is agreeing, so split the pot
+        HALF = (contract.balance / 2)
+        send(contract.storage["PARTNER_1"], HALF, (tx.gas - 100))
+        send(contract.storage["PARTNER_2"], HALF, (tx.gas - 100))
+        contract.storage["STATE"] = "DIVORCED"
+        // The partners are now divorced. :(
+      else:
+        // make a new divorce request pending, waiting for agreement
+        contract.storage["DIVORCE_CREATOR"] = tx.origin
+

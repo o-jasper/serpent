@@ -1,0 +1,21 @@
+// From http://etherscripter.com/
+// A basic vote registration contract
+
+if !contract.storage["_run_before_"]:
+  // Designate the "admin", who will receive any collected funds at the end
+  // (Donations are optional and don't affect the voting but we like a way to get received funds out.)
+  contract.storage["ADMIN"] = msg.sender
+  contract.storage["_run_before_"] = 1
+else:
+  // The user supplies what they're voting for as the contract input (e.g. "COKE" or "PEPSI")
+  VOTED_ITEM = msg.data[0]
+  // Make sure they haven't voted already first
+  if !(contract.storage[msg.sender]):
+    // The contract records a vote by incrementing the number of votes associated with the provided input
+    contract.storage[VOTED_ITEM] = (contract.storage[VOTED_ITEM] + 1)
+    // It also records the address of the caller and what they voted for, so this is public record
+    contract.storage[msg.sender] = VOTED_ITEM
+  // Release all funds to the admin when they call in without a vote
+  if (msg.sender == contract.storage["ADMIN"] and !(VOTED_ITEM)):
+    send(contract.storage["ADMIN"], contract.balance, (tx.gas - 100))
+
