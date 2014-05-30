@@ -199,31 +199,18 @@ bodied_continued = {'elif': ['elif', 'else'],
                     'case': ['of', 'default'],
                     'init': ['code']}
 
-   
-def toktype(token):
-    if token is None or isinstance(token, astnode):
-        return None
-    elif token.val in ['(', '[']:
-        return 'left_paren'
-    elif token.val in [')', ']']:
-        return 'right_paren'
-    elif token.val == ',':
-        return 'comma'
-    elif token.val == ':':
-        return 'colon'
-    elif token.val in ['!']:
-        return 'unary_operation'
-    elif not isinstance(token.val, str):
-        return 'compound'
-    elif token.val in precedence:
-        return 'binary_operation'
+
+def is_alphanum(token):
+    if token is None or isinstance(token, astnode) or token.val in precedence:
+        return False
     elif re.match('^[0-9a-zA-Z\-\._]*$', token.val):
-        return 'alphanum'
-    elif token.val[0] in ['"', "'"] and token.val[0] == token.val[-1]:
-        return 'alphanum'
+        return True
+    elif token.val[0] in ['"', "'"]:
+        if token.val[0] != token.val[-1]:
+            raise Exception("String ended did not match!")
+        return True
     else:
-        print token
-        raise Exception("Invalid token: " + str(token))
+        return False
 
 
 # https://en.wikipedia.org/wiki/Shunting-yard_algorithm
@@ -289,14 +276,13 @@ def shunting_yard(tokens):
     while len(iq) > 0:
         prev = tok
         tok = iq.pop(0)
-        typ = toktype(tok)
-        if typ == 'alphanum':
+        if is_alphanum(tok):
             oq.append(tok)
         elif tok.val in openers:
             opener_stack.append(tok.val)
             # Handle cases like 3 * (2 + 5) by using 'id' as a default function
             # name
-            if toktype(prev) != 'alphanum' and toktype(prev) != 'right_paren':
+            if not is_alphanum(prev) and prev.val not in closers:
                 oq.append(token('id', *prev.metadata))
             # Say the statement is "... f(45...". At the start, we would have f
             # as the last item on the oq. So we move it onto the stack, put the
@@ -312,7 +298,7 @@ def shunting_yard(tokens):
             # arithmetic inside the last argument. Then, we run popstack
             # to coalesce all of the function arguments sitting on the
             # oq into a single list
-            while len(stack) and toktype(stack[-1]) != 'left_paren':
+            while len(stack) and stack[-1].val not in openers:
                 popstack(stack, oq)
             if len(stack):
                 stack.pop()
@@ -320,11 +306,11 @@ def shunting_yard(tokens):
             popstack(stack, oq)
         elif tok.val in precedence:
             # -5 -> 0 - 5
-            if tok.val == '-' and toktype(prev) not in ['alphanum', 'right_paren']:
+            if tok.val == '-' and not (is_alphanum(prev) or prev.val in closers):
                 oq.append(token('0', *tok.metadata))
             # Handle BEDMAS operator precedence
             prec = precedence[tok.val]
-            while len(stack) and toktype(stack[-1]) == 'binary_operation' and precedence[stack[-1].val] < prec:
+            while len(stack) and stack[-1].val in precedence and stack[-1].val not in unary and precedence[stack[-1].val] < prec:
                 popstack(stack, oq)
             stack.append(tok)
     while len(stack):
