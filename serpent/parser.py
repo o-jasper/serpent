@@ -236,6 +236,9 @@ def is_alphanum(token):
 # the function name, are separated by commas, and end with a right bracket,
 # are also included in this algorithm, though in a different way
 def shunting_yard(tokens):
+    if len(tokens) > 0 and tokens[0].val in openers:
+        tokens = [token('id')] + tokens
+
     iq = [x for x in tokens]
     oq = []
     stack = []
