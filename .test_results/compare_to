@@ -1,0 +1,1158 @@
+=================
+
+
+AST: (seq)
+
+LLL: (RETURN 0 (lll (seq) 0))
+
+(RETURN 0 (lll (seq) 0))
+Analysis:  {'varhash': {}, 'inner': [{'varhash': {}, 'inner': []}]}
+
+AEVM: $begincode_2.endcode_2 DUP 0 $begincode_2 CODECOPY $endcode_2 JUMP ~begincode_2 #CODE_BEGIN #CODE_END ~endcode_2 0 RETURN
+
+Output: 6000516000600b39600b586000f2
+=================
+// First line comment
+x = 1
+
+AST: (= x 1)
+
+LLL: (RETURN 0 (lll (MSTORE 0 1) 0))
+
+(RETURN 0 (lll (MSTORE 0 1) 0))
+Analysis:  {'varhash': {}, 'inner': [{'varhash': {'__x': '0'}, 'inner': []}]}
+
+AEVM: $begincode_7.endcode_7 DUP 0 $begincode_7 CODECOPY $endcode_7 JUMP ~begincode_7 #CODE_BEGIN 1 0 MSTORE #CODE_END ~endcode_7 0 RETURN
+
+Output: 6005516000600b3960105860016000546000f2
+=================
+x = 3 + 5
+
+AST: (= x (+ 3 5))
+
+LLL: (RETURN 0 (lll (MSTORE 0 8) 0))
+
+(RETURN 0 (lll (MSTORE 0 8) 0))
+Analysis:  {'varhash': {}, 'inner': [{'varhash': {'__x': '0'}, 'inner': []}]}
+
+AEVM: $begincode_14.endcode_14 DUP 0 $begincode_14 CODECOPY $endcode_14 JUMP ~begincode_14 #CODE_BEGIN 8 0 MSTORE #CODE_END ~endcode_14 0 RETURN
+
+Output: 6005516000600b3960105860086000546000f2
+=================
+my_array = array(3)  // Testing underscores.
+my_array[0] = 4
+my_array[1] = 6
+my_array[2] = 8
+
+AST: (seq 
+    (= my_array (array 3))
+    (= (access my_array 0) 4)
+    (= (access my_array 1) 6)
+    (= (access my_array 2) 8)
+)
+
+LLL: (RETURN 0 
+    (lll 
+        (seq 
+            (MSTORE8 31 0)
+            (seq 
+                (MSTORE 0 (alloc 96))
+                (MSTORE (ADD (MLOAD 0) 0) 4)
+                (MSTORE (ADD (MLOAD 0) 32) 6)
+                (MSTORE (ADD (MLOAD 0) 64) 8)
+            )
+        )
+        0
+    )
+)
+
+(RETURN 0 ;blablabla
+    (lll 
+        (seq 
+            (MSTORE8 31 0)
+            (seq 
+                (MSTORE 0 (alloc 96))
+                (MSTORE (ADD (MLOAD 0) 0) 4)
+                (MSTORE (ADD (MLOAD 0) 32) 6)
+                (MSTORE (ADD (MLOAD 0) 64) 8)
+            )
+        )
+        0
+    )
+)
+Analysis:  {'varhash': {}, 'inner': [{'varhash': {'__my_array': '0'}, 'inner': [], 'alloc_used': True}]}
+
+AEVM: $begincode_21.endcode_21 DUP 0 $begincode_21 CODECOPY $endcode_21 JUMP ~begincode_21 #CODE_BEGIN 0 31 MSTORE8 96 MSIZE SWAP MSIZE ADD 1 SWAP SUB 0 SWAP MSTORE8 0 MSTORE 4 0 0 MLOAD ADD MSTORE 6 32 0 MLOAD ADD MSTORE 8 64 0 MLOAD ADD MSTORE #CODE_END ~endcode_21 0 RETURN
+
+Output: 6031516000600b39603c586000601f5560605b525b0160015203600052556000546004600060005301546006602060005301546008604060005301546000f2
+=================
+x = msg.datasize
+y = msg.data
+z = msg.sender
+o = msg(z,10^18,0,y,x)
+
+AST: (seq 
+    (= x msg.datasize)
+    (= y msg.data)
+    (= z msg.sender)
+    (= o (msg z (^ 10 18) 0 y x))
+)
+
+LLL: (RETURN 0 
+    (lll 
+        (seq 
+            (MSTORE 64 (alloc (CALLDATASIZE)))
+            (CALLDATACOPY 0 64 (CALLDATASIZE))
+            (seq 
+                (MSTORE 0 (DIV (CALLDATASIZE) 32))
+                (MSTORE 32 (MLOAD 64))
+                (MSTORE 96 (CALLER))
+                (MSTORE 128 
+                    (seq 
+                        (CALL (MLOAD 96) 1000000000000000000 0 (MLOAD 32) (MUL 32 (MLOAD 0)) 160 32)
+                        (MLOAD 160)
+                    )
+                )
+            )
+        )
+        0
+    )
+)
+
+(RETURN 0 ;blablabla
+    (lll 
+        (seq 
+            (MSTORE 64 (alloc (CALLDATASIZE)))
+            (CALLDATACOPY 0 64 (CALLDATASIZE))
+            (seq 
+                (MSTORE 0 (DIV (CALLDATASIZE) 32))
+                (MSTORE 32 (MLOAD 64))
+                (MSTORE 96 (CALLER))
+                (MSTORE 128 
+                    (seq 
+                        (CALL (MLOAD 96) 1000000000000000000 0 (MLOAD 32) (MUL 32 (MLOAD 0)) 160 32)
+                        (MLOAD 160)
+                    )
+                )
+            )
+        )
+        0
+    )
+)
+BUG: Parsing output again gave different result!
+(RETURN 0 
+    (lll 
+        (seq 
+            (MSTORE 64 (alloc (CALLDATASIZE)))
+            (CALLDATACOPY 0 64 (CALLDATASIZE))
+            (seq 
+                (MSTORE 0 (DIV (CALLDATASIZE) 32))
+                (MSTORE 32 (MLOAD 64))
+                (MSTORE 96 (CALLER))
+                (MSTORE 128 
+                    (seq 
+                        (CALL (MLOAD 96) 1000000000000000000 0 (MLOAD 32) (MUL 32 (MLOAD 0)) 160 32)
+                        (MLOAD 160)
+                    )
+                )
+            )
+        )
+        0
+    )
+)
+(RETURN 0 
+    (lll 
+        (seq 
+            (MSTORE 64 (alloc (CALLDATASIZE)))
+            (CALLDATACOPY 0 64 (CALLDATASIZE))
+            (seq 
+                (MSTORE 0 (DIV (CALLDATASIZE) 32))
+                (MSTORE 32 (MLOAD 64))
+                (MSTORE 96 (CALLER))
+                (MSTORE 128 
+                    (seq 
+                        (CALL (MLOAD 96) 1000000000000000000 0 (MLOAD 32) (MUL 32 (MLOAD 0)) 160 32)
+                        (MLOAD 160)
+                    )
+                )
+            )
+        )
+        0
+    )
+)
+
+Analysis:  {'varhash': {}, 'inner': [{'varhash': {'__o': '128', '_temp_50_1': '160', '__msg.data': '64', '__y': '32', '__x': '0', '__z': '96'}, 'inner': [], 'msgdata_used': True}]}
+
+AEVM: $begincode_52.endcode_52 DUP 0 $begincode_52 CODECOPY $endcode_52 JUMP ~begincode_52 #CODE_BEGIN CALLDATASIZE MSIZE SWAP MSIZE ADD 1 SWAP SUB 0 SWAP MSTORE8 64 MSTORE CALLDATASIZE 64 0 CALLDATACOPY 32 CALLDATASIZE DIV 0 MSTORE 64 MLOAD 32 MSTORE CALLER 96 MSTORE 32 160 0 MLOAD 32 MUL 32 MLOAD 0 1000000000000000000 96 MLOAD CALL 160 MLOAD 128 MSTORE #CODE_END ~endcode_52 0 RETURN
+
+Output: 6049516000600b39605458365b525b0160015203600052556040543660406000376020360460005460405360205433606054602060a06000536020026020536000670de0b6b3a7640000606053f160a0536080546000f2
+=================
+if msg.value <= 25 * 10^18:
+    return(0)
+elif contract.storage[msg.data[0]] or msg.data[0] < 1000:
+    return(1)
+elif third:
+    return("else")
+contract.storage[msg.data[0]] = msg.data[1]
+
+AST: (seq 
+    (if (<= msg.value (* 25 (^ 10 18))) (return 0) 
+        (elif 
+            (or (access contract.storage (access msg.data 0)) (< (access msg.data 0) 1000))
+            (return 1)
+            (elif third (return "else"))
+        )
+    )
+    (= (access contract.storage (access msg.data 0)) (access msg.data 1))
+)
+
+LLL: (RETURN 0 
+    (lll 
+        (seq 
+            (if (NOT (GT (CALLVALUE) (MUL 25 1000000000000000000))) 
+                (seq 
+                    (MSTORE 0 0)
+                    (RETURN 0 32)
+                )
+                (if (OR (SLOAD (CALLDATALOAD 0)) (SLT (CALLDATALOAD 0) 1000)) 
+                    (seq 
+                        (MSTORE 32 1)
+                        (RETURN 32 32)
+                    )
+                    (unless (NOT (MLOAD 64)) 
+                        (seq 
+                            (MSTORE 96 1701606245)
+                            (RETURN 96 32)
+                        )
+                    )
+                )
+            )
+            (SSTORE (CALLDATALOAD 0) (CALLDATALOAD 32))
+        )
+        0
+    )
+)
+
+(RETURN 0 ;blablabla
+    (lll 
+        (seq 
+            (if (NOT (GT (CALLVALUE) (MUL 25 1000000000000000000))) 
+                (seq 
+                    (MSTORE 0 0)
+                    (RETURN 0 32)
+                )
+                (if (OR (SLOAD (CALLDATALOAD 0)) (SLT (CALLDATALOAD 0) 1000)) 
+                    (seq 
+                        (MSTORE 32 1)
+                        (RETURN 32 32)
+                    )
+                    (unless (NOT (MLOAD 64)) 
+                        (seq 
+                            (MSTORE 96 1701606245)
+                            (RETURN 96 32)
+                        )
+                    )
+                )
+            )
+            (SSTORE (CALLDATALOAD 0) (CALLDATALOAD 32))
+        )
+        0
+    )
+)
+Analysis:  {'varhash': {}, 'inner': [{'varhash': {'__third': '64', '_temp_78_1': '32', '_temp_73_1': '0', '_temp_81_1': '96'}, 'inner': []}]}
+
+AEVM: $begincode_96.endcode_96 DUP 0 $begincode_96 CODECOPY $endcode_96 JUMP ~begincode_96 #CODE_BEGIN 1000000000000000000 25 MUL CALLVALUE GT NOT NOT $else_98 JUMPI 0 0 MSTORE 32 0 RETURN $endif_98 JUMP ~else_98 1000 0 CALLDATALOAD SLT 0 CALLDATALOAD SLOAD OR NOT $else_112 JUMPI 1 32 MSTORE 32 32 RETURN $endif_112 JUMP ~else_112 64 MLOAD NOT $endif_128 JUMPI 1701606245 96 MSTORE 32 96 RETURN ~endif_128 ~endif_112 ~endif_98 32 CALLDATALOAD 0 CALLDATALOAD SSTORE #CODE_END ~endcode_96 0 RETURN
+
+Output: 61005d51600061000e3961006b58670de0b6b3a7640000601902340b0f0f61002259600060005460206000f2610056586103e86000350c60003556110f61004159600160205460206020f2610056586040530f6100565963656c736560605460206060f2602035600035576000f2
+=================
+while i < 997:
+    i = i + 1
+
+AST: (while (< i 997) (= i (+ i 1)))
+
+LLL: (RETURN 0 (lll (until (NOT (SLT (MLOAD 0) 997)) (MSTORE 0 (ADD (MLOAD 0) 1))) 0))
+
+(RETURN 0 (lll (until (NOT (SLT (MLOAD 0) 997)) (MSTORE 0 (ADD (MLOAD 0) 1))) 0))
+Analysis:  {'varhash': {}, 'inner': [{'varhash': {'__i': '0'}, 'inner': []}]}
+
+AEVM: $begincode_147.endcode_147 DUP 0 $begincode_147 CODECOPY $endcode_147 JUMP ~begincode_147 #CODE_BEGIN ~beg_148 997 0 MLOAD SLT NOT $end_148 JUMPI 1 0 MLOAD ADD 0 MSTORE $beg_148 JUMP ~end_148 #CODE_END ~endcode_147 0 RETURN
+
+Output: 6017516000600b396022586103e56000530c0f6017596001600053016000546000586000f2
+=================
+i = 0
+a = 1
+while i < 997:
+    a = (a * 3) % 997
+    i = i + 1
+contract.storage[-1] = a
+
+AST: (seq 
+    (= i 0)
+    (= a 1)
+    (while (< i 997) 
+        (seq 
+            (= a (% (* a 3) 997))
+            (= i (+ i 1))
+        )
+    )
+    (= (access contract.storage (- 0 1)) a)
+)
+
+LLL: (RETURN 0 
+    (lll 
+        (seq 
+            (MSTORE 0 0)
+            (MSTORE 32 1)
+            (until (NOT (SLT (MLOAD 0) 997)) 
+                (seq 
+                    (MSTORE 32 (SMOD (MUL (MLOAD 32) 3) 997))
+                    (MSTORE 0 (ADD (MLOAD 0) 1))
+                )
+            )
+            (SSTORE 115792089237316195423570985008687907853269984665640564039457584007913129639935 
+                (MLOAD 32)
+            )
+        )
+        0
+    )
+)
+
+(RETURN 0 ;blablabla
+    (lll 
+        (seq 
+            (MSTORE 0 0)
+            (MSTORE 32 1)
+            (until (NOT (SLT (MLOAD 0) 997)) 
+                (seq 
+                    (MSTORE 32 (SMOD (MUL (MLOAD 32) 3) 997))
+                    (MSTORE 0 (ADD (MLOAD 0) 1))
+                )
+            )
+            (SSTORE 115792089237316195423570985008687907853269984665640564039457584007913129639935 
+                (MLOAD 32)
+            )
+        )
+        0
+    )
+)
+Analysis:  {'varhash': {}, 'inner': [{'varhash': {'__a': '32', '__i': '0'}, 'inner': []}]}
+
+AEVM: $begincode_163.endcode_163 DUP 0 $begincode_163 CODECOPY $endcode_163 JUMP ~begincode_163 #CODE_BEGIN 0 0 MSTORE 1 32 MSTORE ~beg_171 997 0 MLOAD SLT NOT $end_171 JUMPI 997 3 32 MLOAD MUL SMOD 32 MSTORE 1 0 MLOAD ADD 0 MSTORE $beg_171 JUMP ~end_171 32 MLOAD 115792089237316195423570985008687907853269984665640564039457584007913129639935 SSTORE #CODE_END ~endcode_163 0 RETURN
+
+Output: 6053516000600b39605e58600060005460016020546103e56000530c0f602e596103e560036020530207602054600160005301600054600a586020537fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff576000f2
+=================
+if msg.data[0] == 0:
+    if msg.data[1] > 1000 and !contract.storage[msg.data[1]]:
+        contract.storage[msg.data[1]] = msg.data[2]
+else:
+    k = sha3(msg.data[2])
+    a = array(1)
+    msg(contract.storage[msg.data[1]],msg.value,0,msg.datasize-3,a,1)
+    contract.storage[k] = a
+    return(a,1)
+
+AST: (if (== (access msg.data 0) 0) 
+    (if 
+        (and (> (access msg.data 1) 1000) (! (access contract.storage (access msg.data 1))))
+        (= (access contract.storage (access msg.data 1)) (access msg.data 2))
+    )
+    (seq 
+        (= k (sha3 (access msg.data 2)))
+        (= a (array 1))
+        (msg (access contract.storage (access msg.data 1)) msg.value 0 (- msg.datasize 3) a 
+            1
+        )
+        (= (access contract.storage k) a)
+        (return a 1)
+    )
+)
+
+LLL: (RETURN 0 
+    (lll 
+        (seq 
+            (MSTORE8 159 0)
+            (if (EQ (CALLDATALOAD 0) 0) 
+                (unless (NOT (AND (SGT (CALLDATALOAD 32) 1000) (NOT (SLOAD (CALLDATALOAD 32))))) 
+                    (SSTORE (CALLDATALOAD 32) (CALLDATALOAD 64))
+                )
+                (seq 
+                    (MSTORE 0 
+                        (seq 
+                            (MSTORE 32 (CALLDATALOAD 64))
+                            (SHA3 32 32)
+                        )
+                    )
+                    (MSTORE 64 (alloc 32))
+                    (seq 
+                        (MSTORE 96 32)
+                        (MSTORE 128 (alloc (MLOAD 96)))
+                        (POP 
+                            (CALL (SLOAD (CALLDATALOAD 32)) (CALLVALUE) 0 (SUB (DIV (CALLDATASIZE) 32) 3) 
+                                (MUL 32 (MLOAD 64))
+                                128
+                                (MLOAD 96)
+                            )
+                        )
+                        (MLOAD 128)
+                    )
+                    (SSTORE (MLOAD 0) (MLOAD 64))
+                    (RETURN (MLOAD 64) 32)
+                )
+            )
+        )
+        0
+    )
+)
+
+(RETURN 0 ;blablabla
+    (lll 
+        (seq 
+            (MSTORE8 159 0)
+            (if (EQ (CALLDATALOAD 0) 0) 
+                (unless (NOT (AND (SGT (CALLDATALOAD 32) 1000) (NOT (SLOAD (CALLDATALOAD 32))))) 
+                    (SSTORE (CALLDATALOAD 32) (CALLDATALOAD 64))
+                )
+                (seq 
+                    (MSTORE 0 
+                        (seq 
+                            (MSTORE 32 (CALLDATALOAD 64))
+                            (SHA3 32 32)
+                        )
+                    )
+                    (MSTORE 64 (alloc 32))
+                    (seq 
+                        (MSTORE 96 32)
+                        (MSTORE 128 (alloc (MLOAD 96)))
+                        (POP 
+                            (CALL (SLOAD (CALLDATALOAD 32)) (CALLVALUE) 0 (SUB (DIV (CALLDATASIZE) 32) 3) 
+                                (MUL 32 (MLOAD 64))
+                                128
+                                (MLOAD 96)
+                            )
+                        )
+                        (MLOAD 128)
+                    )
+                    (SSTORE (MLOAD 0) (MLOAD 64))
+                    (RETURN (MLOAD 64) 32)
+                )
+            )
+        )
+        0
+    )
+)
+Analysis:  {'varhash': {}, 'inner': [{'varhash': {'_temp_138_2': '128', '_temp_135_1': '32', '__a': '64', '__k': '0', '_temp_138_1': '96'}, 'inner': [], 'alloc_used': True}]}
+
+AEVM: $begincode_199.endcode_199 DUP 0 $begincode_199 CODECOPY $endcode_199 JUMP ~begincode_199 #CODE_BEGIN 0 159 MSTORE8 0 0 CALLDATALOAD EQ NOT $else_204 JUMPI 32 CALLDATALOAD SLOAD NOT 1000 32 CALLDATALOAD SGT AND NOT $endif_209 JUMPI 64 CALLDATALOAD 32 CALLDATALOAD SSTORE ~endif_209 $endif_204 JUMP ~else_204 64 CALLDATALOAD 32 MSTORE 32 32 SHA3 0 MSTORE 32 MSIZE SWAP MSIZE ADD 1 SWAP SUB 0 SWAP MSTORE8 64 MSTORE 32 96 MSTORE 96 MLOAD MSIZE SWAP MSIZE ADD 1 SWAP SUB 0 SWAP MSTORE8 128 MSTORE 96 MLOAD 128 64 MLOAD 32 MUL 3 32 CALLDATASIZE DIV SUB 0 CALLVALUE 32 CALLDATALOAD SLOAD CALL POP 128 MLOAD 64 MLOAD 0 MLOAD SSTORE 32 64 MLOAD RETURN ~endif_204 #CODE_END ~endcode_199 0 RETURN
+
+Output: 61008e51600061000e3961009c586000609f5560006000350e0f61002d59602035560f6103e86020350d100f610029596040356020355761008e58604035602054602060202060005460205b525b01600152036000525560405460206060546060535b525b01600152036000525560805460605360806040536020026003602036040360003460203556f150608053604053600053576020604053f26000f2
+=================
+a = array(3)
+b = string(3)
+setch(a,2,"c")
+byte(a,1)
+c = getch(a,2)
+d = c
+return(d)
+
+AST: (seq 
+    (= a (array 3))
+    (= b (string 3))
+    (setch a 2 "c")
+    (byte a 1)
+    (= c (getch a 2))
+    (= d c)
+    (return d)
+)
+
+LLL: (RETURN 0 
+    (lll 
+        (seq 
+            (MSTORE8 159 0)
+            (seq 
+                (MSTORE 0 (alloc 96))
+                (MSTORE 32 (alloc 3))
+                (MSTORE8 (ADD (MLOAD 0) 2) 99)
+                (BYTE (MLOAD 0) 1)
+                (MSTORE 64 (MOD (MLOAD (ADD (MLOAD 0) 2)) 256))
+                (MSTORE 96 (MLOAD 64))
+                (seq 
+                    (MSTORE 128 (MLOAD 96))
+                    (RETURN 128 32)
+                )
+            )
+        )
+        0
+    )
+)
+
+(RETURN 0 ;blablabla
+    (lll 
+        (seq 
+            (MSTORE8 159 0)
+            (seq 
+                (MSTORE 0 (alloc 96))
+                (MSTORE 32 (alloc 3))
+                (MSTORE8 (ADD (MLOAD 0) 2) 99)
+                (BYTE (MLOAD 0) 1)
+                (MSTORE 64 (MOD (MLOAD (ADD (MLOAD 0) 2)) 256))
+                (MSTORE 96 (MLOAD 64))
+                (seq 
+                    (MSTORE 128 (MLOAD 96))
+                    (RETURN 128 32)
+                )
+            )
+        )
+        0
+    )
+)
+Analysis:  {'varhash': {}, 'inner': [{'varhash': {'__d': '96', '_temp_158_1': '128', '__a': '0', '__c': '64', '__b': '32'}, 'inner': [], 'alloc_used': True}]}
+
+AEVM: $begincode_282.endcode_282 DUP 0 $begincode_282 CODECOPY $endcode_282 JUMP ~begincode_282 #CODE_BEGIN 0 159 MSTORE8 96 MSIZE SWAP MSIZE ADD 1 SWAP SUB 0 SWAP MSTORE8 0 MSTORE 3 MSIZE SWAP MSIZE ADD 1 SWAP SUB 0 SWAP MSTORE8 32 MSTORE 99 2 0 MLOAD ADD MSTORE8 1 0 MLOAD BYTE 256 2 0 MLOAD ADD MLOAD MOD 64 MSTORE 64 MLOAD 96 MSTORE 96 MLOAD 128 MSTORE 32 128 RETURN #CODE_END ~endcode_282 0 RETURN
+
+Output: 61005551600061000e39610063586000609f5560605b525b01600152036000525560005460035b525b016001520360005255602054606360026000530155600160005313610100600260005301530660405460405360605460605360805460206080f26000f2
+=================
+x = msg(0xf345747062de4d05d897d62c4696febbedcb36b8, 10^18, tx.gas - 100, [10,20,30], 3)
+a = array(3)
+a[0] = 10
+a[1] = 20
+a[2] = 30
+y = array(1)
+y[0] = msg(0xf345747062de4d05d897d62c4696febbedcb36b8, 10^18, tx.gas - 100, a, 3, 1)
+x = y[0]
+
+AST: (seq 
+    (= x 
+        (msg 0xf345747062de4d05d897d62c4696febbedcb36b8 (^ 10 18) (- tx.gas 100) 
+            (array_lit 10 20 30)
+            3
+        )
+    )
+    (= a (array 3))
+    (= (access a 0) 10)
+    (= (access a 1) 20)
+    (= (access a 2) 30)
+    (= y (array 1))
+    (= (access y 0) 
+        (msg 0xf345747062de4d05d897d62c4696febbedcb36b8 (^ 10 18) (- tx.gas 100) a 3 1)
+    )
+    (= x (access y 0))
+)
+
+LLL: (RETURN 0 
+    (lll 
+        (seq 
+            (MSTORE8 191 0)
+            (seq 
+                (MSTORE 0 
+                    (seq 
+                        (CALL 1388833651997103392417367945487414479762911606456 1000000000000000000 
+                            (SUB (GAS) 100)
+                            (array_lit 10 20 30)
+                            96
+                            32
+                            32
+                        )
+                        (MLOAD 32)
+                    )
+                )
+                (MSTORE 64 (alloc 96))
+                (MSTORE (ADD (MLOAD 64) 0) 10)
+                (MSTORE (ADD (MLOAD 64) 32) 20)
+                (MSTORE (ADD (MLOAD 64) 64) 30)
+                (MSTORE 96 (alloc 32))
+                (MSTORE (ADD (MLOAD 96) 0) 
+                    (seq 
+                        (MSTORE 128 32)
+                        (MSTORE 160 (alloc (MLOAD 128)))
+                        (POP 
+                            (CALL 1388833651997103392417367945487414479762911606456 1000000000000000000 
+                                (SUB (GAS) 100)
+                                (MLOAD 64)
+                                96
+                                160
+                                (MLOAD 128)
+                            )
+                        )
+                        (MLOAD 160)
+                    )
+                )
+                (MSTORE 0 (MLOAD (ADD (MLOAD 96) 0)))
+            )
+        )
+        0
+    )
+)
+
+(RETURN 0 
+    (lll 
+        (seq 
+            (MSTORE8 191 0)
+            (seq 
+                (MSTORE 0 
+                    (seq 
+                        (CALL 1388833651997103392417367945487414479762911606456 1000000000000000000 
+                            (SUB (GAS) 100)
+                            (array_lit 10 20 30)
+                            96
+                            32
+                            32
+                        )
+                        (MLOAD 32)
+                    )
+                )
+                (MSTORE 64 (alloc 96))
+                (MSTORE (ADD (MLOAD 64) 0) 10)
+                (MSTORE (ADD (MLOAD 64) 32) 20)
+                (MSTORE (ADD (MLOAD 64) 64) 30)
+                (MSTORE 96 (alloc 32))
+                (MSTORE (ADD (MLOAD 96) 0) 
+                    (seq 
+                        (MSTORE 128 32)
+                        (MSTORE 160 (alloc (MLOAD 128)))
+                        (POP 
+                            (CALL 1388833651997103392417367945487414479762911606456 1000000000000000000 
+                                (SUB (GAS) 100)
+                                (MLOAD 64)
+                                96
+                                160
+                                (MLOAD 128)
+                            )
+                        )
+                        (MLOAD 160)
+                    )
+                )
+                (MSTORE 0 (MLOAD (ADD (MLOAD 96) 0)))
+            )
+        )
+        0
+    )
+)
+Analysis:  {'varhash': {}, 'inner': [{'varhash': {'__a': '64', '_temp_192_2': '160', '_temp_192_1': '128', '__y': '96', '__x': '0', '_temp_180_1': '32'}, 'inner': [], 'alloc_used': True}]}
+
+AEVM: $begincode_330.endcode_330 DUP 0 $begincode_330 CODECOPY $endcode_330 JUMP ~begincode_330 #CODE_BEGIN 0 191 MSTORE8 32 32 96 MSIZE DUP 10 SWAP MSTORE DUP 32 ADD 20 SWAP MSTORE DUP 32 ADD 30 SWAP MSTORE 100 GAS SUB 1000000000000000000 1388833651997103392417367945487414479762911606456 CALL 32 MLOAD 0 MSTORE 96 MSIZE SWAP MSIZE ADD 1 SWAP SUB 0 SWAP MSTORE8 64 MSTORE 10 0 64 MLOAD ADD MSTORE 20 32 64 MLOAD ADD MSTORE 30 64 64 MLOAD ADD MSTORE 32 MSIZE SWAP MSIZE ADD 1 SWAP SUB 0 SWAP MSTORE8 96 MSTORE 32 128 MSTORE 128 MLOAD MSIZE SWAP MSIZE ADD 1 SWAP SUB 0 SWAP MSTORE8 160 MSTORE 128 MLOAD 160 96 64 MLOAD 100 GAS SUB 1000000000000000000 1388833651997103392417367945487414479762911606456 CALL POP 160 MLOAD 0 96 MLOAD ADD MSTORE 0 96 MLOAD ADD MLOAD 0 MSTORE #CODE_END ~endcode_330 0 RETURN
+
+Output: 6100e051600061000e396100ee58600060bf556020602060605b51600a5254516020016014525451602001601e525460645c03670de0b6b3a764000073f345747062de4d05d897d62c4696febbedcb36b8f160205360005460605b525b016001520360005255604054600a60006040530154601460206040530154601e6040604053015460205b525b01600152036000525560605460206080546080535b525b01600152036000525560a05460805360a0606060405360645c03670de0b6b3a764000073f345747062de4d05d897d62c4696febbedcb36b8f15060a05360006060530154600060605301536000546000f2
+=================
+a = 0x1001 & 1
+
+
+AST: (= a (& 0x1001 1))
+
+LLL: (RETURN 0 (lll (MSTORE 0 1) 0))
+
+(RETURN 0 (lll (MSTORE 0 1) 0))
+Analysis:  {'varhash': {}, 'inner': [{'varhash': {'__a': '0'}, 'inner': []}]}
+
+AEVM: $begincode_419.endcode_419 DUP 0 $begincode_419 CODECOPY $endcode_419 JUMP ~begincode_419 #CODE_BEGIN 1 0 MSTORE #CODE_END ~endcode_419 0 RETURN
+
+Output: 6005516000600b3960105860016000546000f2
+=================
+// A comment on a line on its own at the start of a file
+
+AST: (seq)
+
+LLL: (RETURN 0 (lll (seq) 0))
+
+(RETURN 0 (lll (seq) 0))
+Analysis:  {'varhash': {}, 'inner': [{'varhash': {}, 'inner': []}]}
+
+AEVM: $begincode_426.endcode_426 DUP 0 $begincode_426 CODECOPY $endcode_426 JUMP ~begincode_426 #CODE_BEGIN #CODE_END ~endcode_426 0 RETURN
+
+Output: 6000516000600b39600b586000f2
+=================
+which = 1
+case which:
+of 3:
+    x = 1
+    return(x)
+of 1:
+    return('1')
+default:
+    return("most default")
+
+AST: (seq 
+    (= which 1)
+    (case which (seq) 
+        (of 3 
+            (seq 
+                (= x 1)
+                (return x)
+            )
+            (of 1 (return '1') (default (return "most default")))
+        )
+    )
+)
+
+LLL: (RETURN 0 
+    (lll 
+        (seq 
+            (MSTORE 0 1)
+            (if (EQ (MLOAD 32) 3) 
+                (seq 
+                    (MSTORE 64 1)
+                    (seq 
+                        (MSTORE 96 (MLOAD 64))
+                        (RETURN 96 32)
+                    )
+                )
+                (if (EQ (MLOAD 32) 1) 
+                    (seq 
+                        (MSTORE 128 49)
+                        (RETURN 128 32)
+                    )
+                    (seq 
+                        (MSTORE 160 33868602050805780886181997684)
+                        (RETURN 160 32)
+                    )
+                )
+            )
+        )
+        0
+    )
+)
+
+(RETURN 0 ;blablabla
+    (lll 
+        (seq 
+            (MSTORE 0 1)
+            (if (EQ (MLOAD 32) 3) 
+                (seq 
+                    (MSTORE 64 1)
+                    (seq 
+                        (MSTORE 96 (MLOAD 64))
+                        (RETURN 96 32)
+                    )
+                )
+                (if (EQ (MLOAD 32) 1) 
+                    (seq 
+                        (MSTORE 128 49)
+                        (RETURN 128 32)
+                    )
+                    (seq 
+                        (MSTORE 160 33868602050805780886181997684)
+                        (RETURN 160 32)
+                    )
+                )
+            )
+        )
+        0
+    )
+)
+Analysis:  {'varhash': {}, 'inner': [{'varhash': {'_temp_217_1': '128', '__which': '0', '__#casevar2': '32', '_temp_218_1': '160', '_temp_216_1': '96', '__x': '64'}, 'inner': []}]}
+
+AEVM: $begincode_431.endcode_431 DUP 0 $begincode_431 CODECOPY $endcode_431 JUMP ~begincode_431 #CODE_BEGIN 1 0 MSTORE 3 32 MLOAD EQ NOT $else_436 JUMPI 1 64 MSTORE 64 MLOAD 96 MSTORE 32 96 RETURN $endif_436 JUMP ~else_436 1 32 MLOAD EQ NOT $else_453 JUMPI 49 128 MSTORE 32 128 RETURN $endif_453 JUMP ~else_453 33868602050805780886181997684 160 MSTORE 32 160 RETURN ~endif_453 ~endif_436 #CODE_END ~endcode_431 0 RETURN
+
+Output: 604e516000600b39605958600160005460036020530e0f602259600160405460405360605460206060f2604e5860016020530e0f603959603160805460206080f2604e586b6d6f73742064656661756c7460a054602060a0f26000f2
+=================
+init:
+    a = 1
+code:
+    b = 2
+
+AST: (init (= a 1) (code (= b 2)))
+
+LLL: (seq 
+    (MSTORE 0 1)
+    (RETURN 0 (lll (MSTORE 0 2) 0))
+)
+
+(seq ;blablabla
+    (MSTORE 0 1)
+    (RETURN 0 (lll (MSTORE 0 2) 0))
+)
+Analysis:  {'varhash': {'__a': '0'}, 'inner': [{'varhash': {'__b': '0'}, 'inner': []}]}
+
+AEVM: 1 0 MSTORE $begincode_479.endcode_479 DUP 0 $begincode_479 CODECOPY $endcode_479 JUMP ~begincode_479 #CODE_BEGIN 2 0 MSTORE #CODE_END ~endcode_479 0 RETURN
+
+Output: 6001600054600551600060103960155860026000546000f2
+=================
+init:
+    contract.storage[1] = msg.sender
+code:
+    contract.storage[2] = 1
+
+AST: (init (= (access contract.storage 1) msg.sender) 
+    (code (= (access contract.storage 2) 1))
+)
+
+LLL: (seq 
+    (SSTORE 1 (CALLER))
+    (RETURN 0 (lll (SSTORE 2 1) 0))
+)
+
+(seq ;blablabla
+    (SSTORE 1 (CALLER))
+    (RETURN 0 (lll (SSTORE 2 1) 0))
+)
+Analysis:  {'varhash': {}, 'inner': [{'varhash': {}, 'inner': []}]}
+
+AEVM: CALLER 1 SSTORE $begincode_490.endcode_490 DUP 0 $begincode_490 CODECOPY $endcode_490 JUMP ~begincode_490 #CODE_BEGIN 1 2 SSTORE #CODE_END ~endcode_490 0 RETURN
+
+Output: 336001576005516000600f3960145860016002576000f2
+=================
+init: // comment on block line
+    contract.storage[1] = msg.sender
+code:
+    if tx.gas > 1000: // comment on block line
+        send(msg.sender, msg.value, tx.gas / 2)
+        return(1)
+    return(0)
+
+AST: (init (= (access contract.storage 1) msg.sender) 
+    (code 
+        (seq 
+            (if (> tx.gas 1000) 
+                (seq 
+                    (send msg.sender msg.value (/ tx.gas 2))
+                    (return 1)
+                )
+            )
+            (return 0)
+        )
+    )
+)
+
+LLL: (seq 
+    (SSTORE 1 (CALLER))
+    (RETURN 0 
+        (lll 
+            (seq 
+                (unless (NOT (SGT (GAS) 1000)) 
+                    (seq 
+                        (CALL (CALLER) (CALLVALUE) (SDIV (GAS) 2) 0 0 0 0)
+                        (seq 
+                            (MSTORE 0 1)
+                            (RETURN 0 32)
+                        )
+                    )
+                )
+                (seq 
+                    (MSTORE 32 0)
+                    (RETURN 32 32)
+                )
+            )
+            0
+        )
+    )
+)
+
+(seq ;blablabla
+    (SSTORE 1 (CALLER))
+    (RETURN 0 
+        (lll 
+            (seq 
+                (unless (NOT (SGT (GAS) 1000)) 
+                    (seq 
+                        (CALL (CALLER) (CALLVALUE) (SDIV (GAS) 2) 0 0 0 0)
+                        (seq 
+                            (MSTORE 0 1)
+                            (RETURN 0 32)
+                        )
+                    )
+                )
+                (seq 
+                    (MSTORE 32 0)
+                    (RETURN 32 32)
+                )
+            )
+            0
+        )
+    )
+)
+Analysis:  {'varhash': {}, 'inner': [{'varhash': {'_temp_255_1': '0', '_temp_256_1': '32'}, 'inner': []}]}
+
+AEVM: CALLER 1 SSTORE $begincode_501.endcode_501 DUP 0 $begincode_501 CODECOPY $endcode_501 JUMP ~begincode_501 #CODE_BEGIN 1000 GAS SGT NOT $endif_503 JUMPI 0 0 0 0 2 GAS SDIV CALLVALUE CALLER CALL 1 0 MSTORE 32 0 RETURN ~endif_503 0 32 MSTORE 32 32 RETURN #CODE_END ~endcode_501 0 RETURN
+
+Output: 33600157602c516000600f39603b586103e85c0d0f602259600060006000600060025c053433f1600160005460206000f2600060205460206020f26000f2
+=================
+return(msg.data[0]*2)
+
+AST: (return (* (access msg.data 0) 2))
+
+LLL: (RETURN 0 
+    (lll 
+        (seq 
+            (MSTORE 0 (MUL (CALLDATALOAD 0) 2))
+            (RETURN 0 32)
+        )
+        0
+    )
+)
+
+(RETURN 0 ;blablabla
+    (lll 
+        (seq 
+            (MSTORE 0 (MUL (CALLDATALOAD 0) 2))
+            (RETURN 0 32)
+        )
+        0
+    )
+)
+Analysis:  {'varhash': {}, 'inner': [{'varhash': {'_temp_265_1': '0'}, 'inner': []}]}
+
+AEVM: $begincode_536.endcode_536 DUP 0 $begincode_536 CODECOPY $endcode_536 JUMP ~begincode_536 #CODE_BEGIN 2 0 CALLDATALOAD MUL 0 MSTORE 32 0 RETURN #CODE_END ~endcode_536 0 RETURN
+
+Output: 600e516000600b3960195860026000350260005460206000f26000f2
+=================
+// Namecoin
+
+if !contract.storage[msg.data[0]]: # Is the key not yet taken?
+    # Then take it!
+    contract.storage[msg.data[0]] = msg.data[1]
+    return(1)
+else:
+    return(0) // Otherwise do nothing
+
+AST: (if (! (access contract.storage (access msg.data 0))) 
+    (seq 
+        (= (access contract.storage (access msg.data 0)) (access msg.data 1))
+        (return 1)
+    )
+    (return 0)
+)
+
+LLL: (RETURN 0 
+    (lll 
+        (if (NOT (SLOAD (CALLDATALOAD 0))) 
+            (seq 
+                (SSTORE (CALLDATALOAD 0) (CALLDATALOAD 32))
+                (seq 
+                    (MSTORE 0 1)
+                    (RETURN 0 32)
+                )
+            )
+            (seq 
+                (MSTORE 32 0)
+                (RETURN 32 32)
+            )
+        )
+        0
+    )
+)
+
+(RETURN 0 ;blablabla
+    (lll 
+        (if (NOT (SLOAD (CALLDATALOAD 0))) 
+            (seq 
+                (SSTORE (CALLDATALOAD 0) (CALLDATALOAD 32))
+                (seq 
+                    (MSTORE 0 1)
+                    (RETURN 0 32)
+                )
+            )
+            (seq 
+                (MSTORE 32 0)
+                (RETURN 32 32)
+            )
+        )
+        0
+    )
+)
+Analysis:  {'varhash': {}, 'inner': [{'varhash': {'_temp_286_1': '32', '_temp_285_1': '0'}, 'inner': []}]}
+
+AEVM: $begincode_550.endcode_550 DUP 0 $begincode_550 CODECOPY $endcode_550 JUMP ~begincode_550 #CODE_BEGIN 0 CALLDATALOAD SLOAD NOT NOT $else_551 JUMPI 32 CALLDATALOAD 0 CALLDATALOAD SSTORE 1 0 MSTORE 32 0 RETURN $endif_551 JUMP ~else_551 0 32 MSTORE 32 32 RETURN ~endif_551 #CODE_END ~endcode_550 0 RETURN
+
+Output: 6027516000600b39603258600035560f0f601d5960203560003557600160005460206000f2602758600060205460206020f26000f2
+=================
+x = create(tx.gas - 100, 0, import("examples/mul2.se"))
+return(msg(x,0,tx.gas-100,[5],1))
+
+AST: (seq 
+    (= x (create (- tx.gas 100) 0 (import "examples/mul2.se")))
+    (return (msg x 0 (- tx.gas 100) (array_lit 5) 1))
+)
+
+LLL: (RETURN 0 
+    (lll 
+        (seq 
+            (MSTORE8 95 0)
+            (seq 
+                (MSTORE 0 
+                    (CREATE (SUB (GAS) 100) 0 
+                        (RETURN 0 
+                            (lll 
+                                (seq 
+                                    (MSTORE 0 (MUL (CALLDATALOAD 0) 2))
+                                    (RETURN 0 32)
+                                )
+                                0
+                            )
+                        )
+                    )
+                )
+                (seq 
+                    (MSTORE 32 
+                        (seq 
+                            (CALL (MLOAD 0) 0 (SUB (GAS) 100) (array_lit 5) 32 64 32)
+                            (MLOAD 64)
+                        )
+                    )
+                    (RETURN 32 32)
+                )
+            )
+        )
+        0
+    )
+)
+
+(RETURN 0 ;blablabla
+    (lll 
+        (seq 
+            (MSTORE8 95 0)
+            (seq 
+                (MSTORE 0 
+                    (CREATE (SUB (GAS) 100) 0 
+                        (RETURN 0 
+                            (lll 
+                                (seq 
+                                    (MSTORE 0 (MUL (CALLDATALOAD 0) 2))
+                                    (RETURN 0 32)
+                                )
+                                0
+                            )
+                        )
+                    )
+                )
+                (seq 
+                    (MSTORE 32 
+                        (seq 
+                            (CALL (MLOAD 0) 0 (SUB (GAS) 100) (array_lit 5) 32 64 32)
+                            (MLOAD 64)
+                        )
+                    )
+                    (RETURN 32 32)
+                )
+            )
+        )
+        0
+    )
+)
+Analysis:  {'varhash': {}, 'inner': [{'varhash': {'__x': '0', '_temp_311_1': '64', '_temp_310_1': '32'}, 'inner': [{'varhash': {'_temp_308_1': '0'}, 'inner': []}], 'alloc_used': True}]}
+
+AEVM: $begincode_579.endcode_579 DUP 0 $begincode_579 CODECOPY $endcode_579 JUMP ~begincode_579 #CODE_BEGIN 0 95 MSTORE8 $begincode_594.endcode_594 DUP 0 $begincode_594 CODECOPY $endcode_594 JUMP ~begincode_594 #CODE_BEGIN 2 0 CALLDATALOAD MUL 0 MSTORE 32 0 RETURN #CODE_END ~endcode_594 0 RETURN 0 100 GAS SUB CREATE 0 MSTORE 32 64 32 MSIZE DUP 5 SWAP MSTORE 100 GAS SUB 0 0 MLOAD CALL 64 MLOAD 32 MSTORE 32 32 RETURN #CODE_END ~endcode_579 0 RETURN
+
+Output: 61004f51600061000e3961005d586000605f5561000e516000610013396100215860026000350260005460206000f26000f2600060645c03f06000546020604060205b516005525460645c036000600053f160405360205460206020f26000f2
+=================
+init:
+    contract.storage[msg.sender] = 1000000
+code:
+    if msg.datasize == 1:
+        addr = msg.data[0]
+        return(contract.storage[addr])
+    else:
+        from = msg.sender
+        fromvalue = contract.storage[from]
+        to = msg.data[0]
+        value = msg.data[1]
+        if fromvalue >= value:
+            contract.storage[from] = fromvalue - value
+            contract.storage[to] = contract.storage[to] + value
+            return(1)
+        else:
+            return(0)
+
+AST: (init (= (access contract.storage msg.sender) 1000000) 
+    (code 
+        (if (== msg.datasize 1) 
+            (seq 
+                (= addr (access msg.data 0))
+                (return (access contract.storage addr))
+            )
+            (seq 
+                (= from msg.sender)
+                (= fromvalue (access contract.storage from))
+                (= to (access msg.data 0))
+                (= value (access msg.data 1))
+                (if (>= fromvalue value) 
+                    (seq 
+                        (= (access contract.storage from) (- fromvalue value))
+                        (= (access contract.storage to) (+ (access contract.storage to) value))
+                        (return 1)
+                    )
+                    (return 0)
+                )
+            )
+        )
+    )
+)
+
+LLL: (seq 
+    (SSTORE (CALLER) 1000000)
+    (RETURN 0 
+        (lll 
+            (if (EQ (DIV (CALLDATASIZE) 32) 1) 
+                (seq 
+                    (MSTORE 0 (CALLDATALOAD 0))
+                    (seq 
+                        (MSTORE 32 (SLOAD (MLOAD 0)))
+                        (RETURN 32 32)
+                    )
+                )
+                (seq 
+                    (MSTORE 64 (CALLER))
+                    (MSTORE 96 (SLOAD (MLOAD 64)))
+                    (MSTORE 128 (CALLDATALOAD 0))
+                    (MSTORE 160 (CALLDATALOAD 32))
+                    (if (NOT (LT (MLOAD 96) (MLOAD 160))) 
+                        (seq 
+                            (SSTORE (MLOAD 64) (SUB (MLOAD 96) (MLOAD 160)))
+                            (SSTORE (MLOAD 128) (ADD (SLOAD (MLOAD 128)) (MLOAD 160)))
+                            (seq 
+                                (MSTORE 192 1)
+                                (RETURN 192 32)
+                            )
+                        )
+                        (seq 
+                            (MSTORE 224 0)
+                            (RETURN 224 32)
+                        )
+                    )
+                )
+            )
+            0
+        )
+    )
+)
+
+(seq ;blablabla
+    (SSTORE (CALLER) 1000000)
+    (RETURN 0 
+        (lll 
+            (if (EQ (DIV (CALLDATASIZE) 32) 1) 
+                (seq 
+                    (MSTORE 0 (CALLDATALOAD 0))
+                    (seq 
+                        (MSTORE 32 (SLOAD (MLOAD 0)))
+                        (RETURN 32 32)
+                    )
+                )
+                (seq 
+                    (MSTORE 64 (CALLER))
+                    (MSTORE 96 (SLOAD (MLOAD 64)))
+                    (MSTORE 128 (CALLDATALOAD 0))
+                    (MSTORE 160 (CALLDATALOAD 32))
+                    (if (NOT (LT (MLOAD 96) (MLOAD 160))) 
+                        (seq 
+                            (SSTORE (MLOAD 64) (SUB (MLOAD 96) (MLOAD 160)))
+                            (SSTORE (MLOAD 128) (ADD (SLOAD (MLOAD 128)) (MLOAD 160)))
+                            (seq 
+                                (MSTORE 192 1)
+                                (RETURN 192 32)
+                            )
+                        )
+                        (seq 
+                            (MSTORE 224 0)
+                            (RETURN 224 32)
+                        )
+                    )
+                )
+            )
+            0
+        )
+    )
+)
+Analysis:  {'varhash': {}, 'inner': [{'varhash': {'__from': '64', '__addr': '0', '__fromvalue': '96', '_temp_337_1': '32', '_temp_347_1': '192', '__value': '160', '_temp_348_1': '224', '__to': '128'}, 'inner': []}]}
+
+AEVM: 1000000 CALLER SSTORE $begincode_634.endcode_634 DUP 0 $begincode_634 CODECOPY $endcode_634 JUMP ~begincode_634 #CODE_BEGIN 1 32 CALLDATASIZE DIV EQ NOT $else_635 JUMPI 0 CALLDATALOAD 0 MSTORE 0 MLOAD SLOAD 32 MSTORE 32 32 RETURN $endif_635 JUMP ~else_635 CALLER 64 MSTORE 64 MLOAD SLOAD 96 MSTORE 0 CALLDATALOAD 128 MSTORE 32 CALLDATALOAD 160 MSTORE 160 MLOAD 96 MLOAD LT NOT NOT $else_672 JUMPI 160 MLOAD 96 MLOAD SUB 64 MLOAD SSTORE 160 MLOAD 128 MLOAD SLOAD ADD 128 MLOAD SSTORE 1 192 MSTORE 32 192 RETURN $endif_672 JUMP ~else_672 0 224 MSTORE 32 224 RETURN ~endif_672 ~endif_635 #CODE_END ~endcode_634 0 RETURN
+
+Output: 620f4240335761007551600061001439610089586001602036040e0f610022596000356000546000535660205460206020f261007558336040546040535660605460003560805460203560a05460a0536060530a0f0f61006b5960a053606053036040535760a053608053560160805357600160c054602060c0f261007558600060e054602060e0f26000f2
