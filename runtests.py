@@ -11,12 +11,12 @@ def bijection_test_lllparser(ast2):
         i = text2.find('\n', i)
         n -= 1
     if i > 0:
-        text2 = text2[:i] + ';blablabla\n' + text2[i+1:]
-    print(text2)
+        text2 = text2[:i] + ';' + str(random.random()) + '\n' + text2[i+1:]
 
     ast3  = lllparser.parse_lll(text2)
     if ast3.listfy() != ast2.listfy():
-        print("BUG: Parsing output again gave different result!")
+        print("BUG: Parsing LLL again (with comments) gave different result!")
+        print(text2)
         print(ast2)
         print(ast3)
         print("")

@@ -19,13 +19,15 @@ get_commit()
 }
 
 TO="$TEST_RESULTS/$(get_commit 0)"
-if [ "$(git diff --stat)" != "" ]; then  # Annotate there there were changes.
+if [ "$(git diff --stat)" != "" ]; then  # Annotate where there were changes.
     TO="$TO"_
-fi
-
-if [ ! -e "$TO" ]; then
+    run > "$TO"
+elif [ ! -e "$TO" ]; then
     run > "$TO"
 fi
+
+grep -n BUG $TO
+echo "Differences: (some bugs may show up too)"
 
 if [ -e "$1" ]; then
     diff "$TO" "$1"
