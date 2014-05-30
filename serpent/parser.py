@@ -262,7 +262,6 @@ def shunting_yard(tokens):
     # we get first [ 2, [ +, 5, 3 ] ] then [ [ *, 2, [ +, 5, 3 ] ] ]
     def popstack(stack, oq):
         tok = stack.pop()
-        typ = toktype(tok)
         if tok.val in unary:
             a = oq.pop()
             oq.append(astnode(tok.val, [a], *tok.metadata))        
@@ -275,7 +274,7 @@ def shunting_yard(tokens):
                                 tok.val, 'vs', openers[opener_stack[-1]])
             opener_stack.pop()
             args = []
-            while toktype(oq[-1]) != 'left_paren':
+            while not isinstance(oq[-1], token) or oq[-1].val not in openers:
                 args.insert(0, oq.pop())
             lbrack = oq.pop()
             if tok.val == ']' and args[0].val != 'id':
