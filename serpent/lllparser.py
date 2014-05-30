@@ -1,27 +1,19 @@
 import parser
 
 
-def serialize_lll(ast):
-    if isinstance(ast, parser.token):
-        return ast.val
-    o = '(' + ast.fun
-    subs = map(serialize_lll, ast.args)
-    k = 0
-    out = ''
-    while k <= len(subs) and sum(map(len, subs[:k])) < 80:
-        out = ' ' + ' '.join(subs[:k])
-        k += 1
-    if k <= len(subs):
-        o += out + '\n    '
-        o += '\n'.join(subs[k-1:]).replace('\n', '\n    ')
-        o += '\n)'
-    else:
-        o += out.rstrip() + ')'
-    return o
+def tokenize_lll(text):
+    tokens = []
+    for line in text.split('\n'):
+        i = line.find(';')
+        if i >= 0:
+            tokens += parser.tokenize(line[:i])
+        else:
+            tokens += parser.tokenize(line)
+    return tokens
 
 
 def parse_lll(text):
-    tokens = parser.tokenize(text.replace('\n', ''))
+    tokens = tokenize_lll(text)
     for token in tokens:
         token.line = text[:token.char].count('\n')
         token.char -= text[:token.char].rfind('\n')
@@ -34,8 +26,6 @@ def _parse_lll(tokens, pos):
     m, sv, o = tokens[pos].metadata, tokens[pos].val, []
     if sv not in ['(', '{', '[', '@', '@@']:
         return tokens[pos], pos + 1
-    elif sv == '{':
-        pos, o, watch = pos + 1, [parser.token('seq')], '}'
     elif sv == '@':
         node, pos = _parse_lll(tokens, pos+1)
         return parser.astnode('mload', [node], *m), pos

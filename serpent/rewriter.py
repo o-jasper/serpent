@@ -11,6 +11,25 @@ token, astnode = utils.token, utils.astnode
 # Use <xxx> to indicate parts of the code that can pattern-match anything
 # Use '@xxx' to generate variables on the fly
 
+preparing_simple_macros = [
+    [
+        ['if', '<cond>', '<do>', ['else', '<else>']],
+        ['if', '<cond>', '<do>', '<else>']
+    ],
+    [
+        ['elif', '<cond>', '<do>'],
+        ['if', '<cond>', '<do>']
+    ],
+    [
+        ['elif', '<cond>', '<do>', '<else>'],
+        ['if', '<cond>', '<do>', '<else>']
+    ],
+    [
+        ['code', '<code>'],
+        '<code>'
+    ]
+]
+
 simple_macros = [
     [
         ['access', 'msg.data', '<ind>'],
@@ -113,7 +132,7 @@ simple_macros = [
         ['NOT', ['GT', '<x>', '<y>']]
     ],
     [
-        ['create', '<endowment>', ['code', '<code>']],
+        ['create', '<endowment>', '<code>'],
         ['seq',
             ['CREATE', '<endowment>', '@1', ['lll', ['outer', '<code>'], '@1']]]
     ],
@@ -219,6 +238,7 @@ synonyms = [
     ['not', 'NOT'],
     ['byte', 'BYTE'],
     ['string', 'alloc'],
+    ['create', 'CREATE'],
     ['+', 'ADD'],
     ['-', 'SUB'],
     ['*', 'MUL'],
@@ -250,14 +270,20 @@ mathfuncs = [
 
 
 def _import(ast):
-    if ast[0].val == 'import':
-        x = parse(open(ast[0].val).read(), ast[0].val)
-        return astnode('code', [x], *ast[0].metadata)
+    if isinstance(ast, astnode) and ast.fun == 'import':
+        filename = ast.args[0].val
+        if filename[0] == '"':
+            filename = filename[1:-1]
+        x = preprocess(parse(open(filename).read(), ast.args[0].val))
+        return astnode('code', [x], *ast.metadata)
 
 
 def _inset(ast):
-    if ast[0].val == 'inset':
-        return parse(open(ast[0].val).read(), ast[0].val)
+    if isinstance(ast, astnode) and ast.fun == 'inset':
+        filename = ast.args[0].val
+        if filename[0] == '"':
+            filename = filename[1:-1]
+        return parse(open(filename).read(), ast.args[0].val)
 
 
 label_counter = [0]
@@ -295,6 +321,8 @@ def analyze_and_varify_ast(ast, data):
     else:
         if ast.val not in data['varhash']:
             data['varhash'][ast.val] = str(len(data['varhash']) * 32)
+        if ast.val == '__msg.data':
+            data['msgdata_used'] = True
         return token(data['varhash'][ast.val], *ast.metadata)
 
 
@@ -304,9 +332,15 @@ def finalize(expr, data=None):
     if len(data['varhash']) > 0 and data.get('alloc_used'):
         memsz = len(data['varhash']) * 32 - 1
         inner = astnode('MSTORE8', map(token, map(str, [memsz, 0])))
-        return astnode('seq', [inner, e])
-    else:
-        return e
+        e = astnode('seq', [inner, e])
+    if data.get('msgdata_used'):
+        msg_data_addr = token(data['varhash']['__msg.data'])
+        alloc = astnode('alloc', [astnode('CALLDATASIZE', [])])
+        node1 = astnode('MSTORE', [msg_data_addr, alloc])
+        tok3 = astnode('CALLDATASIZE', [])
+        node2 = astnode('CALLDATACOPY', [token(0), msg_data_addr, tok3])
+        e = astnode('seq', [node1, node2, e])
+    return e
 
 
 def preprocess(ast):
@@ -400,8 +434,38 @@ def math_macro(args):
             return token(str(transform(*funargs)), *ast.metadata)
     return app
 
+
+global gen_i
+gen_i = 0
+
+def gensym(name='#gen'):
+    global gen_i
+    gen_i += 1
+    return name + str(gen_i)
+
+def _case(ast):
+
+    if isinstance(ast, astnode) and ast.fun == 'case':
+        assert len(ast.args) == 3  # No cases, or plain wrong.
+        assert ast.args[1].fun == 'seq' and len(ast.args[1].args) == 0
+        var, val = gensym('#casevar'), ast.args[0]
+
+        def c(a):
+            assert isinstance(a, astnode)
+            if a.fun == 'default':
+                assert len(a.args) == 1
+                return a.args[0]
+            elif a.fun == 'of':
+                assert len(a.args) in [2,3]
+                here = ['if', ['==', var, a.args[0]], a.args[1]]
+                if len(a.args) == 3:
+                    here.append(c(a.args[2]))
+                return here
+        return utils.nodeify(c(ast.args[2]))
+
 macros = \
+    map(simple_macro, preparing_simple_macros) + \
     map(simple_macro, simple_macros + constants) + \
-    [_getvar, _setvar] + \
+    [_getvar, _setvar, _case, _import, _inset] + \
     map(synonym_macro, synonyms) + \
     map(math_macro, mathfuncs)
