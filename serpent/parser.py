@@ -182,8 +182,9 @@ precedence = {
 }
 
 unary = ['!']
+unary_workaround = {'-': '0'}
 
-openers = {'(':')', '[':']'}
+openers = {'(': ')', '[': ']'}
 closers = [')', ']']
 
 bodied = {'init': [], 'code': [],  # NOTE: also used in serpent_writer
@@ -195,7 +196,7 @@ bodied = {'init': [], 'code': [],  # NOTE: also used in serpent_writer
           'simple_macro': []}
 
 bodied_continued = {'elif': ['elif', 'else'],
-                    'if': ['elif', 'else'],
+                    'if':   ['elif', 'else'],
                     'case': ['of', 'default'],
                     'init': ['code']}
 
@@ -254,7 +255,7 @@ def shunting_yard(tokens):
         tok = stack.pop()
         if tok.val in unary:
             a = oq.pop()
-            oq.append(astnode(tok.val, [a], *tok.metadata))        
+            oq.append(astnode(tok.val, [a], *tok.metadata))
         elif tok.val in precedence and tok.val != ',':
             a, b = oq.pop(), oq.pop()
             oq.append(astnode(tok.val, [b, a], *tok.metadata))
@@ -309,11 +310,14 @@ def shunting_yard(tokens):
             popstack(stack, oq)
         elif tok.val in precedence:
             # -5 -> 0 - 5
-            if tok.val == '-' and not (is_alphanum(prev) or prev.val in closers):
-                oq.append(token('0', *tok.metadata))
+            if (tok.val in unary_workaround and
+                not (is_alphanum(prev) or prev.val in closers)):
+
+                oq.append(token(unary_workaround[tok.val], *tok.metadata))
             # Handle BEDMAS operator precedence
             prec = precedence[tok.val]
-            while len(stack) and stack[-1].val in precedence and stack[-1].val not in unary and precedence[stack[-1].val] < prec:
+            while (len(stack) and stack[-1].val in precedence and
+                   stack[-1].val not in unary and precedence[stack[-1].val] < prec):
                 popstack(stack, oq)
             stack.append(tok)
     while len(stack):
