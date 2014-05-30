@@ -156,6 +156,9 @@ def tokenize(ln, fil='main', linenum=0, charnum=0):
 
 # This is the part where we turn a token list into an abstract syntax tree
 precedence = {
+    ':': -3,
+    ';': -2,
+    ',': -1,
     '!': 0,
     '^': 1,
     '*': 2,
@@ -178,6 +181,11 @@ precedence = {
     '=': 10,
 }
 
+unary = ['!']
+
+openers = {'(':')', '[':']'}
+closers = [')', ']']
+
 bodied = {'init': [], 'code': [],  # NOTE: also used in serpent_writer
           'if': [''], 'elif': [''], 'else': [],
           'while': [''],
@@ -191,7 +199,7 @@ bodied_continued = {'elif': ['elif', 'else'],
                     'case': ['of', 'default'],
                     'init': ['code']}
 
-
+   
 def toktype(token):
     if token is None or isinstance(token, astnode):
         return None
@@ -245,6 +253,7 @@ def shunting_yard(tokens):
     oq = []
     stack = []
     prev, tok = None, None
+    opener_stack = []  # List of things which close the current thing.
 
     # The normal Shunting-Yard algorithm simply converts expressions into
     # reverse polish notation. Here, we try to be slightly more ambitious
@@ -254,13 +263,17 @@ def shunting_yard(tokens):
     def popstack(stack, oq):
         tok = stack.pop()
         typ = toktype(tok)
-        if typ == 'binary_operation':
+        if tok.val in unary:
+            a = oq.pop()
+            oq.append(astnode(tok.val, [a], *tok.metadata))        
+        elif tok.val in precedence and tok.val != ',':
             a, b = oq.pop(), oq.pop()
             oq.append(astnode(tok.val, [b, a], *tok.metadata))
-        elif typ == 'unary_operation':
-            a = oq.pop()
-            oq.append(astnode(tok.val, [a], *tok.metadata))
-        elif typ == 'right_paren':
+        elif tok.val in closers:
+            if openers[opener_stack[-1]] != tok.val:
+                raise Exception('Did not close with same kind as opened with!',
+                                tok.val, 'vs', openers[opener_stack[-1]])
+            opener_stack.pop()
             args = []
             while toktype(oq[-1]) != 'left_paren':
                 args.insert(0, oq.pop())
@@ -280,7 +293,8 @@ def shunting_yard(tokens):
         typ = toktype(tok)
         if typ == 'alphanum':
             oq.append(tok)
-        elif typ == 'left_paren':
+        elif tok.val in openers:
+            opener_stack.append(tok.val)
             # Handle cases like 3 * (2 + 5) by using 'id' as a default function
             # name
             if toktype(prev) != 'alphanum' and toktype(prev) != 'right_paren':
@@ -294,7 +308,7 @@ def shunting_yard(tokens):
             oq.append(tok)
             oq.append(stack.pop())
             stack.append(tok)
-        elif typ == 'right_paren':
+        elif tok.val in closers:
             # eg. f(27, 3 * 5 + 4). First, we finish evaluating all the
             # arithmetic inside the last argument. Then, we run popstack
             # to coalesce all of the function arguments sitting on the
@@ -305,7 +319,7 @@ def shunting_yard(tokens):
                 stack.pop()
             stack.append(tok)
             popstack(stack, oq)
-        elif typ == 'unary_operation' or typ == 'binary_operation':
+        elif tok.val in precedence:
             # -5 -> 0 - 5
             if tok.val == '-' and toktype(prev) not in ['alphanum', 'right_paren']:
                 oq.append(token('0', *tok.metadata))
@@ -314,15 +328,6 @@ def shunting_yard(tokens):
             while len(stack) and toktype(stack[-1]) == 'binary_operation' and precedence[stack[-1].val] < prec:
                 popstack(stack, oq)
             stack.append(tok)
-        elif typ == 'comma':
-            # Finish evaluating all arithmetic before the comma
-            while len(stack) and toktype(stack[-1]) != 'left_paren':
-                popstack(stack, oq)
-        elif typ == 'colon':
-            # Colon is like a comma except it stays in the argument list
-            while len(stack) and toktype(stack[-1]) != 'right_paren':
-                popstack(stack, oq)
-            oq.append(tok)
     while len(stack):
         popstack(stack, oq)
     if len(oq) == 1:
