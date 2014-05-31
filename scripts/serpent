@@ -5,46 +5,68 @@ import re
 import json
 import serpent
 
+import argparse
+
+commands = 'compile|assemble|compile_to_LLL|LLL|rewrite|parse'
+
 def main():
-    if len(sys.argv) == 1:
-        print "serpent <command> <arg1> <arg2> ..."
+    parser = argparse.ArgumentParser(description="Serpent compiler and tool.")
+
+    parser.add_argument('command', help='What to do; ' + commands +
+                        '\nFirst letters also allowed')
+    parser.add_argument('value', help='Input data.')
+    parser.add_argument('--input', help='Preferred input type. serpent|assembly|LLL',
+                        default='serpent')
+
+    args = parser.parse_args()
+    # Single letter commands for convenience.
+    short = {'c':'compile', 'a':'assemble', 'l':'LLL', 'r':'rewrite', 'p':'parse'}
+    if args.command.lower() in short:
+        args.command = short[args.command.lower()]
+
+    if args.command not in commands.split('|'):  # Check if actual command.
+        print(';Incorrect command; ' + args.command)
+        print(';Not one of ' + commands)
+        return
+
+    if args.command == 'LLL':  # Convenience.
+        args.command = 'compile_to_LLL'
+
+    ishort = {'s':'serpent', 'a':'assembly', 'l':'LLL'}
+    if args.input.lower() in ishort:
+        args.input = ishort[args.input.lower()]
+    # Parsing based on provided input.
+    if args.input == 'LLL':
+        ast = serpent.lllparser.parse_lll(args.value)
+    elif args.input == 'assembly':
+        # Assembly has its own result.
+        if args.command in ['compile_to_LLL', 'rewrite', 'parse']:
+            print('Cannot do this to assembly')
+        elif args.command == 'assemble':
+            print(serpent.lllparser.parse_lll(args.value))
+        elif args.command == 'compile':
+            print(serpent.compiler.assemble(serpent.lllparser.parse_lll(args.value)))
+        return
+    elif args.input == 'serpent':
+        ast = serpent.parser.parse(args.value)
     else:
-        cmd = sys.argv[2] if sys.argv[1][0] == '-' else sys.argv[1]
-        if sys.argv[1] == '-s':
-            args = re.findall(r'\S\S*', sys.stdin.read()) + sys.argv[3:]
-        elif sys.argv[1] == '-B':
-            args = [sys.stdin.read()] + sys.argv[3:]
-        elif sys.argv[1] == '-b':
-            args = [sys.stdin.read()[:-1]] + sys.argv[3:]  # remove trailing \n
-        elif sys.argv[1] == '-j':
-            args = [json.loads(sys.stdin.read())] + sys.argv[3:]
-        elif sys.argv[1] == '-J':
-            args = json.loads(sys.stdin.read()) + sys.argv[3:]
-        elif sys.argv[1] == '-h':
-            args = [x.decode('hex') for x in sys.argv[3:]]
-        elif sys.argv[1] in ['-hs', '-sh']:
-            args = [sys.stdin.read().strip().decode('hex')] + sys.argv[3:]
+        print(';Invalid input type: ' + args.input)
+        print(';Allowed: serpent|assembly|LLL')
+
+    if args.command == 'parse':
+        print(ast)
+    elif args.command == 'rewrite':
+        print(serpent.rewriter.rewrite(ast))
+    else:
+        lll_ast = serpent.compiler.compile_to_lll(ast)
+        if args.command == 'compile_to_LLL':
+            print(lll_ast)
         else:
-            cmd = sys.argv[1]
-            args = sys.argv[2:]
-        try:
-            args[0] = open(args[0]).read()
-        except:
-            pass
-        if cmd in ['rewrite', 'preprocess', 'finalize', 'compile_to_lll',
-                   'compile_lll']:
-            args[0] = serpent.lllparser.parse_lll(args[0])
-        if cmd in ['serialize', 'dereference', 'assemble']:
-            args[0] = args[0].split(' ')
-        o = getattr(serpent, cmd)(*args)
-        if isinstance(o, dict):
-            print json.dumps(o)
-        elif isinstance(o, (list, tuple)):
-            print ' '.join(map(str, o))
-        elif isinstance(o, (serpent.utils.token, serpent.utils.astnode)):
-            print repr(o)
-        else:
-            print o.encode('hex')
+            assembly = serpent.compiler.compile_lll(lll_ast)
+            if args.command == 'assemble':
+                print(assembly)
+            elif args.command == 'compile':
+                print(serpent.compiler.assemble(assembly).encode('hex'))
 
 
 if __name__ == '__main__':
