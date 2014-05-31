@@ -52,20 +52,22 @@ def parse_lines(lns, fil='main', voffset=0, hoffset=0):
         # Calls parse_line to parse the individual line
         out = parse_line(main, fil, voffset + line_index, hoffset + hoffset2)
         # Include the child block into the parsed expression
-        if out.fun in bodied:
+        if not isinstance(out, astnode):
+            o.append(out)
+            continue
+        elif out.fun in bodied:
             # assert len(child_block)  # May be zero now(`case` for instance)
             params = fil, voffset + line_index + 1, hoffset + indent
             out.args.append(parse_lines(child_block, *params))
         else:
             assert not len(child_block)
-        # This is somewhat complicated. Essentially, it converts something like
-        # "if c1 then s1 elif c2 then s2 elif c3 then s3 else s4" (with
-        # appropriate indenting) to [ if c1 s1 [ if c2 s2 [ if c3 s3 s4 ] ] ]
-        if len(o) == 0 or not isinstance(out, astnode):
+
+        if len(o) == 0:
             o.append(out)
             continue
         u = o[-1]
         # It is a continued body.
+        # For instance `if` is continued with `elif` and `else`
         if u.fun in bodied_continued and out.fun in bodied_continued[u.fun]:
                 while len(u.args) == 3:
                     u = u.args[-1]
@@ -358,5 +360,10 @@ def parse_line(ln, fil='main', linenum=0, charnum=0):
         if k < len(tok):
             args.append(shunting_yard(tok[k:]))
         return astnode(tok[0], args, *metadata)
+    elif tok[0].val == 'stop':
+        assert len(tok) == 1
+        return astnode('stop', [])
+    elif tok[0].val == 'return':
+        return astnode('return', [shunting_yard(tok[1:])])
     else:
         return shunting_yard(tok)
