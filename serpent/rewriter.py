@@ -13,185 +13,185 @@ token, astnode = utils.token, utils.astnode
 
 preparing_simple_macros = [
     [
-        ['if', '<cond>', '<do>', ['else', '<else>']],
-        ['if', '<cond>', '<do>', '<else>']
+        ['if', '$cond', '$do', ['else', '$else']],
+        ['if', '$cond', '$do', '$else']
     ],
     [
-        ['elif', '<cond>', '<do>'],
-        ['if', '<cond>', '<do>']
+        ['elif', '$cond', '$do'],
+        ['if', '$cond', '$do']
     ],
     [
-        ['elif', '<cond>', '<do>', '<else>'],
-        ['if', '<cond>', '<do>', '<else>']
+        ['elif', '$cond', '$do', '$else'],
+        ['if', '$cond', '$do', '$else']
     ],
     [
-        ['code', '<code>'],
-        '<code>'
+        ['code', '$code'],
+        '$code'
     ]
 ]
 
 simple_macros = [
     [
-        ['access', 'msg.data', '<ind>'],
-        ['CALLDATALOAD', ['MUL', '32', '<ind>']]
+        ['access', 'msg.data', '$ind'],
+        ['CALLDATALOAD', ['MUL', '32', '$ind']]
     ],
     [
-        ['array', '<len>'],
-        ['alloc', ['MUL', '32', '<len>']]
+        ['array', '$len'],
+        ['alloc', ['MUL', '32', '$len']]
     ],
     [
-        ['while', '<cond>', '<do>'],
-        ['until', ['NOT', '<cond>'], '<do>']
+        ['while', '$cond', '$do'],
+        ['until', ['NOT', '$cond'], '$do']
     ],
     [
-        ['while', ['NOT', '<cond>'], '<do>'],
-        ['until', '<cond>', '<do>']
+        ['while', ['NOT', '$cond'], '$do'],
+        ['until', '$cond', '$do']
     ],
     [
-        ['if', ['NOT', '<cond>'], '<do>'],
-        ['unless', '<cond>', '<do>']
+        ['if', ['NOT', '$cond'], '$do'],
+        ['unless', '$cond', '$do']
     ],
     [
-        ['if', '<cond>', '<do>'],
-        ['unless', ['NOT', '<cond>'], '<do>']
+        ['if', '$cond', '$do'],
+        ['unless', ['NOT', '$cond'], '$do']
     ],
     [
-        ['access', 'contract.storage', '<ind>'],
-        ['SLOAD', '<ind>']
+        ['access', 'contract.storage', '$ind'],
+        ['SLOAD', '$ind']
     ],
     [
-        ['access', '<var>', '<ind>'],
-        ['MLOAD', ['ADD', '<var>', ['MUL', '32', '<ind>']]]
+        ['access', '$var', '$ind'],
+        ['MLOAD', ['ADD', '$var', ['MUL', '32', '$ind']]]
     ],
     [
-        ['set', ['access', 'contract.storage', '<ind>'], '<val>'],
-        ['SSTORE', '<ind>', '<val>']
+        ['set', ['access', 'contract.storage', '$ind'], '$val'],
+        ['SSTORE', '$ind', '$val']
     ],
     [
-        ['set', ['access', '<var>', '<ind>'], '<val>'],
-        ['arrset', '<var>', '<ind>', '<val>']
+        ['set', ['access', '$var', '$ind'], '$val'],
+        ['arrset', '$var', '$ind', '$val']
     ],
     [
-        ['arrset', '<var>', '<ind>', '<val>'],
-        ['MSTORE', ['ADD', '<var>', ['MUL', '32', '<ind>']], '<val>']
+        ['arrset', '$var', '$ind', '$val'],
+        ['MSTORE', ['ADD', '$var', ['MUL', '32', '$ind']], '$val']
     ],
     [
-        ['getch', '<var>', '<ind>'],
-        ['MOD', ['MLOAD', ['ADD', '<var>', '<ind>']], '256']
+        ['getch', '$var', '$ind'],
+        ['MOD', ['MLOAD', ['ADD', '$var', '$ind']], '256']
     ],
     [
-        ['setch', '<var>', '<ind>', '<val>'],
-        ['MSTORE8', ['ADD', '<var>', '<ind>'], '<val>']
+        ['setch', '$var', '$ind', '$val'],
+        ['MSTORE8', ['ADD', '$var', '$ind'], '$val']
     ],
     [
-        ['send', '<to>', '<value>'],
-        ['CALL', ['SUB', ['GAS'], '25'], '<to>', '<value>', '0', '0', '0', '0']
+        ['send', '$to', '$value'],
+        ['CALL', ['SUB', ['GAS'], '25'], '$to', '$value', '0', '0', '0', '0']
     ],
     [
-        ['send', '<gas>', '<to>', '<value>'],
-        ['CALL', '<gas>', '<to>', '<value>', '0', '0', '0', '0']
+        ['send', '$gas', '$to', '$value'],
+        ['CALL', '$gas', '$to', '$value', '0', '0', '0', '0']
     ],
     [
-        ['sha3', '<x>'],
-        ['seq', ['MSTORE', '@1', '<x>'], ['SHA3', '@1', '32']]
+        ['sha3', '$x'],
+        ['seq', ['MSTORE', '@1', '$x'], ['SHA3', '@1', '32']]
     ],
     [
-        ['sha3', '<start>', '<len>'],
-        ['SHA3', '<start>', ['MUL', '32', '<len>']]
+        ['sha3', '$start', '$len'],
+        ['SHA3', '$start', ['MUL', '32', '$len']]
     ],
     [
-        ['calldataload', '<start>', '<len>'],
-        ['CALLDATALOAD', '<start>', ['MUL', '32', '<len>']]
+        ['calldataload', '$start', '$len'],
+        ['CALLDATALOAD', '$start', ['MUL', '32', '$len']]
     ],
     [
-        ['id', '<0>'],
-        '<0>'
+        ['id', '$0'],
+        '$0'
     ],
     [
-        ['return', '<x>'],
-        ['seq', ['MSTORE', '@1', '<x>'], ['RETURN', '@1', '32']]
+        ['return', '$x'],
+        ['seq', ['MSTORE', '@1', '$x'], ['RETURN', '@1', '32']]
     ],
     [
-        ['return', '<start>', '<len>'],
-        ['RETURN', '<start>', ['MUL', '32', '<len>']]
+        ['return', '$start', '$len'],
+        ['RETURN', '$start', ['MUL', '32', '$len']]
     ],
     [
-        ['&&', '<x>', '<y>'],
-        ['if', '<x>', '<y>', '0']
+        ['&&', '$x', '$y'],
+        ['if', '$x', '$y', '0']
     ],
     [
-        ['||', '<x>', '<y>'],
-        ['if', '<x>', '<x>', '<y>']
+        ['||', '$x', '$y'],
+        ['if', '$x', '$x', '$y']
     ],
     [
-        ['>=', '<x>', '<y>'],
-        ['NOT', ['LT', '<x>', '<y>']]
+        ['>=', '$x', '$y'],
+        ['NOT', ['LT', '$x', '$y']]
     ],
     [
-        ['<=', '<x>', '<y>'],
-        ['NOT', ['GT', '<x>', '<y>']]
+        ['<=', '$x', '$y'],
+        ['NOT', ['GT', '$x', '$y']]
     ],
     [
-        ['create', '<endowment>', '<code>'],
+        ['create', '$endowment', '$code'],
         ['seq',
-            ['CREATE', '<endowment>', '@1', ['lll', ['outer', '<code>'], '@1']]]
+            ['CREATE', '$endowment', '@1', ['lll', ['outer', '$code'], '@1']]]
     ],
     [
-        ['msg', '<gas>', '<to>', '<val>', '<dataval>'],
+        ['msg', '$gas', '$to', '$val', '$dataval'],
         ['seq',
-            ['MSTORE', '@1', '<dataval>'],
-            ['CALL', '<gas>', '<to>', '<val>', '@1', '32', '@2', '32'],
+            ['MSTORE', '@1', '$dataval'],
+            ['CALL', '$gas', '$to', '$val', '@1', '32', '@2', '32'],
             ['MLOAD', '@2']]
     ],
     [
-        ['call', '<f>', '<dataval>'],
-        ['msg', ['SUB', ['GAS'], '45'], '<f>', '0', '<dataval>']
+        ['call', '$f', '$dataval'],
+        ['msg', ['SUB', ['GAS'], '45'], '$f', '0', '$dataval']
     ],
     [
-        ['msg', '<gas>', '<to>', '<val>', '<inp>', '<inpsz>'],
+        ['msg', '$gas', '$to', '$val', '$inp', '$inpsz'],
         ['seq',
-            ['CALL', '<gas>', '<to>', '<val>', '<inp>',
-                ['MUL', '32', '<inpsz>'], '@1', '32'],
+            ['CALL', '$gas', '$to', '$val', '$inp',
+                ['MUL', '32', '$inpsz'], '@1', '32'],
             ['MLOAD', '@1']]
     ],
     [
-        ['call', '<f>', '<inp>', '<inpsz>'],
+        ['call', '$f', '$inp', '$inpsz'],
         ['seq',
-            ['set', '@1', '<inpsz>'],
+            ['set', '@1', '$inpsz'],
             ['msg',
                 ['SUB', ['GAS'], ['ADD', '25', ['MLOAD', '@1']]],
-                '<f>', '0', '<inp>', ['MLOAD', '@1']]]
+                '$f', '0', '$inp', ['MLOAD', '@1']]]
     ],
     [
-        ['msg', '<gas>', '<to>', '<val>', '<inp>', '<inpsz>', '<outsz>'],
+        ['msg', '$gas', '$to', '$val', '$inp', '$inpsz', '$outsz'],
         ['seq',
-            ['MSTORE', '@1', ['MUL', '32', '<outsz>']],
+            ['MSTORE', '@1', ['MUL', '32', '$outsz']],
             ['MSTORE', '@2', ['alloc', ['MLOAD', '@1']]],
             ['POP',
-                ['CALL', '<gas>', '<to>', '<val>',
-                 '<inp>', ['MUL', '32', '<inpsz>'], '@2', ['MLOAD', '@1']]],
+                ['CALL', '$gas', '$to', '$val',
+                 '$inp', ['MUL', '32', '$inpsz'], '@2', ['MLOAD', '@1']]],
             ['MLOAD', '@2']]
     ],
     [
-        ['outer', ['init', '<init>', '<code>']],
+        ['outer', ['init', '$init', '$code']],
         ['seq',
-            '<init>',
-            ['RETURN', '0', ['lll', '<code>', '0']]]
+            '$init',
+            ['RETURN', '0', ['lll', '$code', '0']]]
     ],
     [
-        ['outer', ['init', '<shared>', '<init>', '<code>']],
+        ['outer', ['init', '$shared', '$init', '$code']],
         ['seq',
-            '<shared>',
-            '<init>',
-            ['RETURN', '0', ['lll', ['seq', '<shared>', '<code>'], '0']]]
+            '$shared',
+            '$init',
+            ['RETURN', '0', ['lll', ['seq', '$shared', '$code'], '0']]]
     ],
     [
-        ['outer', '<code>'],
-        ['outer', ['init', ['seq'], '<code>']]
+        ['outer', '$code'],
+        ['outer', ['init', ['seq'], '$code']]
     ],
     [
-        ['seq', ['seq'], '<x>'],
-        '<x>'
+        ['seq', ['seq'], '$x'],
+        '$x'
     ]
 ]
 
@@ -366,15 +366,28 @@ def analyze(ast):
 def get_macro_vars(pattern, ast):
     d = {}
     if not isinstance(pattern, list):
-        if pattern[0] == '<' and pattern[-1] == '>':
-            d[pattern[1:-1]] = ast
+        if pattern[0] == '$':
+            if '.' in pattern:
+                raise Exception('Dots in wrong places, or if just three at the end: BUG',
+                                pattern, ast)
+            d[pattern[1:]] = ast
         elif isinstance(ast, astnode) or pattern != ast.val:
             return None
     else:
-        if not isinstance(ast, astnode) or len(ast.args) != len(pattern[1:]):
+        if not isinstance(ast, astnode): # or len(ast.args) != len(pattern[1:]):
             return None
         funarg = token(ast.fun, *ast.metadata)
-        for mitem, astitem in zip(pattern, [funarg] + ast.args):
+        args = [funarg] + ast.args
+        for i in range(len(pattern)):
+            if i >= len(args):
+                return None
+            mitem, astitem = pattern[i], args[i]
+
+            if isinstance(mitem, (str, unicode)) and mitem[0]=='$':
+                if mitem[-3:] == '...':
+                    d[mitem[1:-3]] = astnode('id', ast.args[i-1:])
+                    continue
+
             subdict = get_macro_vars(mitem, astitem)
             if subdict is None:
                 return None
@@ -383,21 +396,35 @@ def get_macro_vars(pattern, ast):
     return d
 
 
+def map_append(fun, list):  # TODO surely it exists already..
+    ret = []
+    for el in list:
+        ret += fun(el)
+    return ret
+
+
 # dict, ast -> ast
-def set_macro_vars(subst, pattern, anchor, lc):
+def _set_macro_vars(subst, pattern, anchor, lc):
     if isinstance(pattern, (str, unicode)):
-        if pattern[0] == '<' and pattern[-1] == '>':
-            return subst[pattern[1:-1]]
+        if pattern[0] == '$':
+            if pattern[-3:] == '...':
+                return subst[pattern[1:-3]].args
+            else:
+                return [subst[pattern[1:]]]
         elif pattern[0] == '@':
-            return token('_temp_'+str(lc)+'_'+pattern[1:], *anchor.metadata)
+            return [token('_temp_'+str(lc)+'_'+pattern[1:], *anchor.metadata)]
         else:
-            return token(pattern, *anchor.metadata)
+            return [token(pattern, *anchor.metadata)]
     else:
-        f = lambda ast: set_macro_vars(subst, ast, anchor, lc)
+        f = lambda ast: _set_macro_vars(subst, ast, anchor, lc)
         if isinstance(pattern, list):
-            return astnode(pattern[0], map(f, pattern[1:]), *anchor.metadata)
+            return [astnode(pattern[0], map_append(f, pattern[1:]), *anchor.metadata)]
         else:
-            return token(pattern, *anchor.metadata)
+            return [token(pattern, *anchor.metadata)]
+
+
+def set_macro_vars(subst, pattern, anchor, lc):
+    return _set_macro_vars(subst, pattern, anchor, lc)[0]
 
 
 def simple_macro(args):
