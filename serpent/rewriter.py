@@ -374,7 +374,7 @@ def get_macro_vars(pattern, ast):
         elif isinstance(ast, astnode) or pattern != ast.val:
             return None
     else:
-        if not isinstance(ast, astnode): # or len(ast.args) != len(pattern[1:]):
+        if not isinstance(ast, astnode):
             return None
         funarg = token(ast.fun, *ast.metadata)
         args = [funarg] + ast.args
@@ -383,7 +383,8 @@ def get_macro_vars(pattern, ast):
                 return None
             mitem, astitem = pattern[i], args[i]
 
-            if isinstance(mitem, (str, unicode)) and mitem[0]=='$':
+            # Read the rest of the expression into the macro variable.
+            if isinstance(mitem, (str, unicode)) and mitem[0] == '$':
                 if mitem[-3:] == '...':
                     d[mitem[1:-3]] = astnode('id', ast.args[i-1:])
                     continue
@@ -465,10 +466,12 @@ def math_macro(args):
 global gen_i
 gen_i = 0
 
+
 def gensym(name='#gen'):
     global gen_i
     gen_i += 1
     return name + str(gen_i)
+
 
 def _case(ast):
 
@@ -483,12 +486,12 @@ def _case(ast):
                 assert len(a.args) == 1
                 return a.args[0]
             elif a.fun == 'of':
-                assert len(a.args) in [2,3]
+                assert len(a.args) in [2, 3]
                 here = ['if', ['==', var, a.args[0]], a.args[1]]
                 if len(a.args) == 3:
                     here.append(c(a.args[2]))
                 return here
-        return utils.nodeify(c(ast.args[2]))
+        return utils.nodeify(['seq', ['set', 'var', val]], c(ast.args[2]))
 
 macros = \
     map(simple_macro, preparing_simple_macros) + \
