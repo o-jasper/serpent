@@ -493,9 +493,17 @@ def _case(ast):
                 return here
         return utils.nodeify(['seq', ['set', 'var', val]], c(ast.args[2]))
 
+
+def _simple_macro(ast):
+    if isinstance(ast, astnode) and ast.fun == 'simple_macro':
+        assert len(ast.args) == 2
+        simple_macros.append(utils.denodeify(ast.args))
+        return astnode('seq',[])
+
+
 macros = \
     map(simple_macro, preparing_simple_macros) + \
     map(simple_macro, simple_macros + constants) + \
-    [_getvar, _setvar, _case, _import, _inset] + \
+    [_getvar, _setvar, _case, _import, _inset, _simple_macro] + \
     map(synonym_macro, synonyms) + \
     map(math_macro, mathfuncs)
