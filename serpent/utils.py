@@ -43,25 +43,25 @@ class astnode():
         return o
 
 
-def nodeify(s, fil='', line=0, char=0):
+def astify(s, fil='', line=0, char=0):
     if isinstance(s, astnode):
         metadata = s.metadata
         fun = s.fun
-        nodes = map(lambda x: nodeify(x, *s.metadata), s.args)
+        nodes = map(lambda x: astify(x, *s.metadata), s.args)
     elif isinstance(s, (token, str, unicode, int, long)):
         return tokenify(s)
     else:
         metadata = fil, line, char
         fun = s[0].val if isinstance(s[0], token) else s[0]
-        nodes = map(lambda x: nodeify(x, *metadata), s[1:])
+        nodes = map(lambda x: astify(x, *metadata), s[1:])
     return astnode(fun, nodes, *metadata)
 
 
-def denodeify(ast):
+def deastify(ast):
     if isinstance(ast, token):
         return detokenify(ast)
     elif isinstance(ast, astnode):
-        ret = [ast.fun] + map(denodeify, ast.args)
+        ret = [ast.fun] + map(deastify, ast.args)
     else:
         return el
 
@@ -81,7 +81,7 @@ def fromhex(b):
     return 0 if len(b) == 0 else hexord(b[-1]) + 16 * fromhex(b[:-1])
 
 
-def is_numberlike(b):
+def is_valuelike(b):
     if isinstance(b, (str, unicode)):
         if re.match('^[0-9\-]*$', b):
             return True

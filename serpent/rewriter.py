@@ -195,7 +195,7 @@ simple_macros = [
     ]
 ]
 
-constants = [
+post_constants = [
     ['msg.datasize', ['DIV', ['CALLDATASIZE'], '32']],
     ['msg.sender', ['CALLER']],
     ['msg.value', ['CALLVALUE']],
@@ -290,7 +290,9 @@ label_counter = [0]
 
 
 # Apply all rewrite rules
-def rewrite(ast):
+def rewrite(ast, macros=None):
+    if macros is None:
+        macros = global_macros
     while 1:
         ast2 = None
         for macro in macros:
@@ -501,7 +503,7 @@ def _simple_macro(ast):
         return astnode('seq',[])
 
 
-macros = \
+global_macros = \
     map(simple_macro, preparing_simple_macros) + \
     map(simple_macro, simple_macros + constants) + \
     [_getvar, _setvar, _case, _import, _inset, _simple_macro] + \
