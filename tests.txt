@@ -1,7 +1,9 @@
-
-================
 // First line comment
 x = 1
+================
+(a + b)  # Starting with an opener.
+if (x+y):
+   return(4)
 ================
 x = 3 + 5
 ================

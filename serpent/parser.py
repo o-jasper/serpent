@@ -52,20 +52,22 @@ def parse_lines(lns, fil='main', voffset=0, hoffset=0):
         # Calls parse_line to parse the individual line
         out = parse_line(main, fil, voffset + line_index, hoffset + hoffset2)
         # Include the child block into the parsed expression
-        if out.fun in bodied:
+        if not isinstance(out, astnode):
+            o.append(out)
+            continue
+        elif out.fun in bodied:
             # assert len(child_block)  # May be zero now(`case` for instance)
             params = fil, voffset + line_index + 1, hoffset + indent
             out.args.append(parse_lines(child_block, *params))
         else:
             assert not len(child_block)
-        # This is somewhat complicated. Essentially, it converts something like
-        # "if c1 then s1 elif c2 then s2 elif c3 then s3 else s4" (with
-        # appropriate indenting) to [ if c1 s1 [ if c2 s2 [ if c3 s3 s4 ] ] ]
-        if len(o) == 0 or not isinstance(out, astnode):
+
+        if len(o) == 0:
             o.append(out)
             continue
         u = o[-1]
         # It is a continued body.
+        # For instance `if` is continued with `elif` and `else`
         if u.fun in bodied_continued and out.fun in bodied_continued[u.fun]:
                 while len(u.args) == 3:
                     u = u.args[-1]
@@ -156,6 +158,9 @@ def tokenize(ln, fil='main', linenum=0, charnum=0):
 
 # This is the part where we turn a token list into an abstract syntax tree
 precedence = {
+    ':': -3,
+    ';': -2,
+    ',': -1,
     '!': 0,
     '^': 1,
     '*': 2,
@@ -171,12 +176,22 @@ precedence = {
     '>=': 4,
     '&': 5,
     '==': 5,
+    '!=': 5,
+    '-=': 5,
+    '+=': 5,
+    '*=': 5,    
     'and': 6,
     '&&': 6,
     'or': 7,
     '||': 7,
     '=': 10,
 }
+
+unary = ['!']
+unary_workaround = {'-': '0'}
+
+openers = {'(': ')', '[': ']'}
+closers = [')', ']']
 
 bodied = {'init': [], 'code': [],  # NOTE: also used in serpent_writer
           'if': [''], 'elif': [''], 'else': [],
@@ -187,35 +202,22 @@ bodied = {'init': [], 'code': [],  # NOTE: also used in serpent_writer
           'simple_macro': []}
 
 bodied_continued = {'elif': ['elif', 'else'],
-                    'if': ['elif', 'else'],
+                    'if':   ['elif', 'else'],
                     'case': ['of', 'default'],
                     'init': ['code']}
 
 
-def toktype(token):
-    if token is None or isinstance(token, astnode):
-        return None
-    elif token.val in ['(', '[']:
-        return 'left_paren'
-    elif token.val in [')', ']']:
-        return 'right_paren'
-    elif token.val == ',':
-        return 'comma'
-    elif token.val == ':':
-        return 'colon'
-    elif token.val in ['!']:
-        return 'unary_operation'
-    elif not isinstance(token.val, str):
-        return 'compound'
-    elif token.val in precedence:
-        return 'binary_operation'
+def is_alphanum(token):
+    if token is None or isinstance(token, astnode) or token.val in precedence:
+        return False
     elif re.match('^[0-9a-zA-Z\-\._]*$', token.val):
-        return 'alphanum'
-    elif token.val[0] in ['"', "'"] and token.val[0] == token.val[-1]:
-        return 'alphanum'
+        return True
+    elif token.val[0] in ['"', "'"]:
+        if token.val[0] != token.val[-1]:
+            raise Exception("String ended did not match!")
+        return True
     else:
-        print token
-        raise Exception("Invalid token: " + str(token))
+        return False
 
 
 # https://en.wikipedia.org/wiki/Shunting-yard_algorithm
@@ -241,10 +243,14 @@ def toktype(token):
 # the function name, are separated by commas, and end with a right bracket,
 # are also included in this algorithm, though in a different way
 def shunting_yard(tokens):
+    if len(tokens) > 0 and tokens[0].val in openers:
+        tokens = [token('id')] + tokens
+
     iq = [x for x in tokens]
     oq = []
     stack = []
     prev, tok = None, None
+    opener_stack = []  # List of things which close the current thing.
 
     # The normal Shunting-Yard algorithm simply converts expressions into
     # reverse polish notation. Here, we try to be slightly more ambitious
@@ -253,16 +259,19 @@ def shunting_yard(tokens):
     # we get first [ 2, [ +, 5, 3 ] ] then [ [ *, 2, [ +, 5, 3 ] ] ]
     def popstack(stack, oq):
         tok = stack.pop()
-        typ = toktype(tok)
-        if typ == 'binary_operation':
-            a, b = oq.pop(), oq.pop()
-            oq.append(astnode(tok.val, [b, a], *tok.metadata))
-        elif typ == 'unary_operation':
+        if tok.val in unary:
             a = oq.pop()
             oq.append(astnode(tok.val, [a], *tok.metadata))
-        elif typ == 'right_paren':
+        elif tok.val in precedence and tok.val != ',':
+            a, b = oq.pop(), oq.pop()
+            oq.append(astnode(tok.val, [b, a], *tok.metadata))
+        elif tok.val in closers:
+            if openers[opener_stack[-1]] != tok.val:
+                raise Exception('Did not close with same kind as opened with!',
+                                tok.val, 'vs', openers[opener_stack[-1]])
+            opener_stack.pop()
             args = []
-            while toktype(oq[-1]) != 'left_paren':
+            while not isinstance(oq[-1], token) or oq[-1].val not in openers:
                 args.insert(0, oq.pop())
             lbrack = oq.pop()
             if tok.val == ']' and args[0].val != 'id':
@@ -277,13 +286,13 @@ def shunting_yard(tokens):
     while len(iq) > 0:
         prev = tok
         tok = iq.pop(0)
-        typ = toktype(tok)
-        if typ == 'alphanum':
+        if is_alphanum(tok):
             oq.append(tok)
-        elif typ == 'left_paren':
+        elif tok.val in openers:
+            opener_stack.append(tok.val)
             # Handle cases like 3 * (2 + 5) by using 'id' as a default function
             # name
-            if toktype(prev) != 'alphanum' and toktype(prev) != 'right_paren':
+            if not is_alphanum(prev) and prev.val not in closers:
                 oq.append(token('id', *prev.metadata))
             # Say the statement is "... f(45...". At the start, we would have f
             # as the last item on the oq. So we move it onto the stack, put the
@@ -294,35 +303,29 @@ def shunting_yard(tokens):
             oq.append(tok)
             oq.append(stack.pop())
             stack.append(tok)
-        elif typ == 'right_paren':
+        elif tok.val in closers:
             # eg. f(27, 3 * 5 + 4). First, we finish evaluating all the
             # arithmetic inside the last argument. Then, we run popstack
             # to coalesce all of the function arguments sitting on the
             # oq into a single list
-            while len(stack) and toktype(stack[-1]) != 'left_paren':
+            while len(stack) and stack[-1].val not in openers:
                 popstack(stack, oq)
             if len(stack):
                 stack.pop()
             stack.append(tok)
             popstack(stack, oq)
-        elif typ == 'unary_operation' or typ == 'binary_operation':
+        elif tok.val in precedence:
             # -5 -> 0 - 5
-            if tok.val == '-' and toktype(prev) not in ['alphanum', 'right_paren']:
-                oq.append(token('0', *tok.metadata))
+            if (tok.val in unary_workaround and
+                not (is_alphanum(prev) or prev.val in closers)):
+
+                oq.append(token(unary_workaround[tok.val], *tok.metadata))
             # Handle BEDMAS operator precedence
             prec = precedence[tok.val]
-            while len(stack) and toktype(stack[-1]) == 'binary_operation' and precedence[stack[-1].val] < prec:
+            while (len(stack) and stack[-1].val in precedence and
+                   stack[-1].val not in unary and precedence[stack[-1].val] < prec):
                 popstack(stack, oq)
             stack.append(tok)
-        elif typ == 'comma':
-            # Finish evaluating all arithmetic before the comma
-            while len(stack) and toktype(stack[-1]) != 'left_paren':
-                popstack(stack, oq)
-        elif typ == 'colon':
-            # Colon is like a comma except it stays in the argument list
-            while len(stack) and toktype(stack[-1]) != 'right_paren':
-                popstack(stack, oq)
-            oq.append(tok)
     while len(stack):
         popstack(stack, oq)
     if len(oq) == 1:
@@ -357,5 +360,10 @@ def parse_line(ln, fil='main', linenum=0, charnum=0):
         if k < len(tok):
             args.append(shunting_yard(tok[k:]))
         return astnode(tok[0], args, *metadata)
+    elif tok[0].val == 'stop':
+        assert len(tok) == 1
+        return astnode('stop', [])
+    elif tok[0].val == 'return':
+        return astnode('return', [shunting_yard(tok[1:])])
     else:
         return shunting_yard(tok)
